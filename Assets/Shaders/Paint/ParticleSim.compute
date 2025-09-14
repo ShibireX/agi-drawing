@@ -1,0 +1,118 @@
+#pragma kernel Integrate
+
+struct Particle {
+    float4 position; // xyz, w = radius
+    float4 velocity; // xyz, w = age   (age < 0 => dead)
+    float4 color;    // rgb, w = alpha
+};
+
+RWStructuredBuffer<Particle> _Particles;
+RWStructuredBuffer<uint>     _SpawnedCount; // length = 1
+
+int   _ActiveCount;      // we will set this to particleCount from CPU
+float _DeltaTime;
+float _Gravity;
+float _Damping;
+float3 _BoundsExtents;
+float _MaxInitialSpeed;
+float _LifeTime;
+float _SpawnRadius;      // radius to assign on spawn
+int   _EmitEnabled;      // 0/1
+int   _SpawnBudget;      // max spawns allowed this frame
+
+// rng helpers (same as before)
+uint Hash(uint seed) {
+    seed ^= 2747636419u;
+    seed *= 2654435769u;
+    seed ^= seed >> 16;
+    seed *= 2654435769u;
+    seed ^= seed >> 16;
+    seed *= 2654435769u;
+    return seed;
+}
+float Random01(uint seed) { return (Hash(seed) & 0x00FFFFFF) / 16777216.0f; }
+
+float3 RandomDirection(uint seed)
+{
+    float x = Random01(seed * 3u) * 2 - 1;
+    float y = Random01(seed * 5u) * 2 - 1;
+    float z = Random01(seed * 7u) * 2 - 1;
+    float3 d = float3(x, y, z);
+    return (all(d == 0)) ? float3(0,1,0) : normalize(d);
+}
+
+[numthreads(256,1,1)]
+void Integrate(uint3 tid : SV_DispatchThreadID)
+{
+    uint i = tid.x;
+    if (i >= (uint)_ActiveCount) return;
+
+    Particle p = _Particles[i];
+
+    bool isDead = (p.velocity.w < 0);
+
+    // Try to (re)spawn if dead and emitting this frame
+    if (isDead && (_EmitEnabled != 0) && (_SpawnBudget > 0))
+    {
+        uint prev;
+        InterlockedAdd(_SpawnedCount[0], 1, prev); // atomic ticket
+        if (prev < (uint)_SpawnBudget)
+        {
+            // spawn at origin with fresh random velocity + reset age and radius
+            p.position.xyz = 0;
+            p.position.w = _SpawnRadius;
+            float3 dir = RandomDirection(i + 1u);
+            float  spd = Random01(i + 11u) * _MaxInitialSpeed;
+            p.velocity.xyz = dir * spd;
+            p.velocity.w   = 0; // age = 0 => alive now
+        }
+        else
+        {
+            // budget exhausted; keep it dead and tiny
+            p.position.w = 0;      // radius 0 => invisible
+            _Particles[i] = p;
+            return;
+        }
+    }
+
+    // If still dead, just ensure invisible and skip work
+    if (p.velocity.w < 0)
+    {
+        p.position.w = 0;          // invisible
+        _Particles[i] = p;
+        return;
+    }
+
+    // alive update
+    // age & lifetime
+    p.velocity.w += _DeltaTime;    // age
+    if (p.velocity.w >= _LifeTime)
+    {
+        // die: mark as dead and make invisible
+        p.velocity.w = -1;
+        p.position.w = 0;
+        _Particles[i] = p;
+        return;
+    }
+
+    // gravity
+    p.velocity.xyz += float3(0, _Gravity, 0) * _DeltaTime;
+
+    // integrate
+    p.position.xyz += p.velocity.xyz * _DeltaTime;
+
+    // bounce AABB with damping
+    float3 half = _BoundsExtents;
+    float r = p.position.w;
+
+    if (p.position.x < -half.x + r) { p.position.x = -half.x + r; p.velocity.x *= -_Damping; }
+    if (p.position.x >  half.x - r) { p.position.x =  half.x - r; p.velocity.x *= -_Damping; }
+
+    if (p.position.y < -half.y + r) { p.position.y = -half.y + r; p.velocity.y *= -_Damping; }
+    if (p.position.y >  half.y - r) { p.position.y =  half.y - r; p.velocity.y *= -_Damping; }
+
+    if (p.position.z < -half.z + r) { p.position.z = -half.z + r; p.velocity.z *= -_Damping; }
+    if (p.position.z >  half.z - r) { p.position.z =  half.z - r; p.velocity.z *= -_Damping; }
+
+    _Particles[i] = p;
+}

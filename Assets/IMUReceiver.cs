@@ -21,6 +21,25 @@ public class ImuUdpLogger : MonoBehaviour
     [Tooltip("Device ID to control the referenceObject. Leave -1 to use first phone seen.")]
     public int controlDeviceId = -1;
 
+    // --------- NEW: Launch settings ----------
+    [Header("Launch Settings")]
+    [Tooltip("Assign the brush tip (Handle.001).")]
+    public Transform brushTip;
+    [Tooltip("Projectile prefab with a Rigidbody (a sphere).")]
+    public GameObject projectilePrefab;
+    [Tooltip("Units per second for the launch velocity.")]
+    public float launchSpeed = 6f;
+    [Tooltip("Fire only when |accel| exceeds this (m/s^2-ish).")]
+    public float fireAccelThreshold = 2.0f;
+    [Tooltip("Cooldown between shots (sec).")]
+    public float fireCooldown = 0.2f;
+    [Tooltip("Auto-destroy projectile after this many seconds.")]
+    public float projectileLifetime = 8f;
+    [Tooltip("Also allow manual fire with space key (ignores threshold).")]
+    public bool allowManualFire = true;
+
+    float lastFireTime = -999f;
+
     UdpClient udp;
     Thread recvThread;
     volatile bool running;
@@ -154,14 +173,56 @@ public class ImuUdpLogger : MonoBehaviour
         // Apply orientation to reference object
         if (referenceObject && control != null)
         {
-            // Adjust axes: phone frame vs Unity frame might differ
-            // Try as-is first; if it looks wrong, experiment with rotation multipliers.
+            // same correction you already use
             Quaternion q = control.q;
             q = new Quaternion(-q.x, q.y, q.z, q.w);
+            Quaternion phoneToUnity = Quaternion.Euler(90, 0, 0) * q;
+            referenceObject.rotation = phoneToUnity;
 
-            // Then apply your 90° rotation correction
-            referenceObject.rotation = Quaternion.Euler(90, 0, 0) * q ;
+            // --------- NEW: Launch in accel direction ----------
+            // Accel is in phone space; rotate it into world space with the same correction
+            Vector3 accelPhone = control.accel;
+
+            // Optional: remove gravity-ish bias. Uncomment if needed.
+            // accelPhone -= new Vector3(0, 0, 9.81f); // depends on your phone's axis/gravity; tweak if wrong
+
+            Vector3 accelWorld = phoneToUnity * accelPhone;
+            float aMag = accelWorld.magnitude;
+
+            bool manual = allowManualFire && Input.GetKeyDown(KeyCode.Space);
+            if ((manual || aMag >= fireAccelThreshold) && (now - lastFireTime) >= fireCooldown)
+            {
+                FireProjectile(
+                    origin: brushTip ? brushTip.position : referenceObject.position,
+                    direction: accelWorld
+                );
+                lastFireTime = now;
+            }
         }
+    }
+
+    void FireProjectile(Vector3 origin, Vector3 direction)
+    {
+        if (projectilePrefab == null)
+        {
+            // Fall back: create a sphere at runtime if no prefab provided.
+            var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            sphere.transform.localScale = Vector3.one * 0.05f;
+            var rb0 = sphere.AddComponent<Rigidbody>();
+            rb0.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            sphere.transform.position = origin;
+            rb0.velocity = direction.normalized * launchSpeed;
+            Destroy(sphere, projectileLifetime);
+            return;
+        }
+
+        var go = Instantiate(projectilePrefab, origin, Quaternion.identity);
+        var rb = go.GetComponent<Rigidbody>();
+        if (rb == null) rb = go.AddComponent<Rigidbody>();
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        rb.velocity = direction.normalized * launchSpeed;
+
+        if (projectileLifetime > 0f) Destroy(go, projectileLifetime);
     }
 
     void OnGUI()

@@ -157,7 +157,8 @@ public class ImuUdpLogger : MonoBehaviour
             // Adjust axes: phone frame vs Unity frame might differ
             // Try as-is first; if it looks wrong, experiment with rotation multipliers.
             Quaternion q = control.q;
-            q = new Quaternion(-q.x, -q.y, q.z, q.w);
+            // q = new Quaternion(-q.x, -q.y, q.z, q.w); // Original
+            q = new Quaternion(q.x, q.y, q.z, q.w); // Works on Sony Xperia 10 VI
 
             // Then apply your 90° rotation correction
             referenceObject.rotation = Quaternion.Euler(90, 0, 180) * q;

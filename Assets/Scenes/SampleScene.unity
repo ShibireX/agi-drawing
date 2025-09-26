@@ -353,7 +353,7 @@ Transform:
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.4, y: 6.1, z: -20.9}
+  m_LocalPosition: {x: 0, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -371,21 +371,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1562bb0b94a840d43b4eef535c1cddb9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  paintSystem: {fileID: 1475877830}
   listenPort: 26761
   logIntervalSeconds: 0.3
   showHud: 1
   playerRigPrefab: {fileID: 919132149155446097, guid: feb43d2286a1148fb81a6c00952df874, type: 3}
-  despawnAfterSeconds: 1
+  despawnAfterSeconds: 15
   maxPlayers: 4
   spawnLeft: {fileID: 0}
   spawnRight: {fileID: 0}
-  fallbackLeft: {x: -10, y: 0, z: 0}
-  fallbackRight: {x: 10, y: 0, z: 0}
-  projectilePrefab: {fileID: 6875872587275543130, guid: ca65124aaea464413b966eb736db0d8b, type: 3}
-  launchSpeed: 50
-  fireAccelThreshold: 10
-  fireCooldown: 0.01
-  projectileLifetime: 2
+  fallbackLeft: {x: -2, y: 0, z: 0}
+  fallbackRight: {x: 2, y: 0, z: 0}
+  projectilePrefab: {fileID: 0}
+  launchSpeed: 6
+  fireAccelThreshold: 2
+  fireCooldown: 0.2
+  projectileLifetime: 8
   allowManualFire: 1
 --- !u!114 &963194231
 MonoBehaviour:
@@ -404,10 +405,89 @@ MonoBehaviour:
   cubeScale: {x: 10, y: 10, z: 10}
   cubeLifetime: 10
   cubePrefab: {fileID: 0}
+--- !u!1 &1475877829
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1475877832}
+  - component: {fileID: 1475877831}
+  - component: {fileID: 1475877830}
+  m_Layer: 0
+  m_Name: PaintSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1475877830
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1475877829}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 964a113439f19d443816bc0645bca36e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  simulationCS: {fileID: 7200000, guid: 55dc8d692019e0a42b782b2c87f840f5, type: 3}
+  boundsExtents: {x: 25, y: 50, z: 25}
+  gravity: -9.81
+  damping: 0.5
+  threadGroupSizeX: 256
+  maxInitialSpeed: 10
+  spawnRate: 25000
+  lifeTime: 5
+  spawnRadius: 0.5
+  mesh: {fileID: -2432090755550338912, guid: 4dea3395154af394d9d388505a2bc367, type: 3}
+  renderMat: {fileID: 2100000, guid: 8023c82a80376934aa948d37fe4f1906, type: 2}
+  baseColor: {r: 1, g: 1, b: 1, a: 1}
+  spawnPosition: {x: 0, y: 0, z: 0}
+  spawnDirection: {x: 0, y: 0, z: 0}
+  spawnColor: {x: 0, y: 0, z: 0}
+  emit: 0
+--- !u!114 &1475877831
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1475877829}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c62adfd0807147d4bbb1eec61a6671fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  particleCount: 125000
+  activeCount: 125000
+  defaultRadius: 0.5
+  initialVelocityRange: {x: 1, y: 1, z: 1}
+  initialColor: {r: 1, g: 1, b: 1, a: 1}
+--- !u!4 &1475877832
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1475877829}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 963194228}
-  - {fileID: 705507995}
   - {fileID: 593734035}
+  - {fileID: 705507995}
+  - {fileID: 963194228}
+  - {fileID: 1475877832}

@@ -8,6 +8,9 @@ using UnityEngine;
 
 public class ImuUdpLogger : MonoBehaviour
 {
+    [Header("Paint")]
+    public Paint.PaintSystem paintSystem;
+
     [Header("Network")]
     public int listenPort = 26761;
 
@@ -316,14 +319,20 @@ public class ImuUdpLogger : MonoBehaviour
                     float aMag = accelWorld.magnitude;
 
                     bool manual = allowManualFire && Input.GetKeyDown(KeyCode.Space);
-                    if ((manual || aMag >= fireAccelThreshold) && (now - rig.lastFireTime) >= fireCooldown)
+                    if (((manual || aMag >= fireAccelThreshold) && (now - rig.lastFireTime) >= fireCooldown) || true)
                     {
-                        FireProjectile(
+
+                        FireProjectiles(
                             origin: rig.tip ? rig.tip.position : (rig.reference ? rig.reference.position : Vector3.zero),
                             direction: accelWorld,
                             tipColor: rig.tipColor
                         );
                         rig.lastFireTime = now;
+                    }
+
+                    else
+                    {
+                        paintSystem.emit = false;
                     }
                 }
 
@@ -357,6 +366,25 @@ public class ImuUdpLogger : MonoBehaviour
             }
             if (layoutChanged) RelayoutAll();
         }
+    }
+
+    // Helper to set renderer color for SRP and built-in pipeline compatibility
+    static void SetRendererColor(Renderer r, Color c)
+    {
+        if (r == null) return;
+        // Use a MaterialPropertyBlock so we don't rely on material name matching or mutate assets
+        var mpb = new MaterialPropertyBlock();
+        r.GetPropertyBlock(mpb);
+        // Try common color properties
+        if (r.sharedMaterial != null && r.sharedMaterial.HasProperty("_BaseColor"))
+        {
+            mpb.SetColor("_BaseColor", c);
+        }
+        if (r.sharedMaterial != null && r.sharedMaterial.HasProperty("_Color"))
+        {
+            mpb.SetColor("_Color", c);
+        }
+        r.SetPropertyBlock(mpb);
     }
 
     PlayerRig CreateRig(byte deviceId, Vector3 spawnPosition)
@@ -415,79 +443,15 @@ public class ImuUdpLogger : MonoBehaviour
         UnityEngine.Debug.Log($"[ImuUdpLogger] Spawned rig for device {deviceId}.");
         return rig;
     }
-
-    // Helper to set renderer color for SRP and built-in pipeline compatibility
-    static void SetRendererColor(Renderer r, Color c)
+    
+    void FireProjectiles(Vector3 origin, Vector3 direction, Color tipColor)
     {
-        if (r == null) return;
-        // Use a MaterialPropertyBlock so we don't rely on material name matching or mutate assets
-        var mpb = new MaterialPropertyBlock();
-        r.GetPropertyBlock(mpb);
-        // Try common color properties
-        if (r.sharedMaterial != null && r.sharedMaterial.HasProperty("_BaseColor"))
-        {
-            mpb.SetColor("_BaseColor", c);
-        }
-        if (r.sharedMaterial != null && r.sharedMaterial.HasProperty("_Color"))
-        {
-            mpb.SetColor("_Color", c);
-        }
-        r.SetPropertyBlock(mpb);
-    }
+        // TODO: Set variables in particle system script
 
-    void FireProjectile(Vector3 origin, Vector3 direction, Color tipColor)
-    {
-        if (projectilePrefab == null)
-        {
-            // Fall back: create a sphere at runtime if no prefab provided.
-            var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            sphere.transform.localScale = Vector3.one * 0.05f;
-            var rb0 = sphere.AddComponent<Rigidbody>();
-            rb0.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-            sphere.transform.position = origin;
-
-            var sr = sphere.GetComponent<Renderer>();
-            if (sr != null)
-            {
-                var m = sr.material; // instance per projectile
-                m.color = tipColor;
-                SetRendererColor(sr, tipColor);
-            }
-
-            rb0.velocity = direction.normalized * launchSpeed;
-            Destroy(sphere, projectileLifetime);
-            return;
-        }
-
-        var go = Instantiate(projectilePrefab, origin, Quaternion.identity);
-        var rb = go.GetComponent<Rigidbody>();
-        if (rb == null) rb = go.AddComponent<Rigidbody>();
-        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-        rb.velocity = direction.normalized * launchSpeed;
-
-        // Color the projectile's tip/material to match the rig's tip color
-        var pr = go.GetComponentInChildren<Renderer>();
-        if (pr != null)
-        {
-            var mats = pr.materials; // instance per projectile
-            bool painted = false;
-            for (int i = 0; i < mats.Length; i++)
-            {
-                if (mats[i].name.StartsWith("TipMaterial"))
-                {
-                    mats[i].color = tipColor;
-                    painted = true;
-                }
-            }
-            if (!painted && mats.Length == 1)
-            {
-                mats[0].color = tipColor;
-            }
-            pr.materials = mats;
-            SetRendererColor(pr, tipColor);
-        }
-
-        if (projectileLifetime > 0f) Destroy(go, projectileLifetime);
+        paintSystem.spawnPosition = origin;
+        paintSystem.spawnDirection = direction.normalized;
+        paintSystem.spawnColor = new Vector3(1.0f, 1.0f, 1.0f);
+        paintSystem.emit = true;
     }
 
     void OnGUI()

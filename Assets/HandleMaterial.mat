@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Celshadematerial 2
+  m_Name: HandleMaterial
   m_Shader: {fileID: 4800000, guid: e953a0e692e38404e8cab85b458c0306, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -83,7 +83,7 @@ Material:
     - _bandCutOff: 1
     m_Colors:
     - _AmbientColor: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 1, g: 0, b: 0.8094106, a: 1}
+    - _Color: {r: 0.5283019, g: 0.30153078, b: 0.30153078, a: 1}
     - _Emission: {r: 0.2735849, g: 0.24433368, b: 0.24433368, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}

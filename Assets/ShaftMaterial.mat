@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Celshadematerial 1
+  m_Name: ShaftMaterial
   m_Shader: {fileID: 4800000, guid: e953a0e692e38404e8cab85b458c0306, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0

@@ -306,7 +306,7 @@ public class ImuUdpLogger : MonoBehaviour
             rig.root = Instantiate(playerRigPrefab);
             rig.root.transform.position = spawnPosition;
             rig.reference = rig.root.transform;
-            var tip = rig.root.transform.Find("Handle.001");
+            var tip = rig.root.transform.Find("brush");
             rig.tip = tip ? tip : rig.root.transform;
         }
         else

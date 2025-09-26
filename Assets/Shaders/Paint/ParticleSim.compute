@@ -20,6 +20,10 @@ float _SpawnRadius;      // radius to assign on spawn
 int   _EmitEnabled;      // 0/1
 int   _SpawnBudget;      // max spawns allowed this frame
 
+float3 _SpawnPosition;
+float3 _SpawnDirection;
+float3 _SpawnColor;
+
 // rng helpers (same as before)
 uint Hash(uint seed) {
     seed ^= 2747636419u;
@@ -59,10 +63,12 @@ void Integrate(uint3 tid : SV_DispatchThreadID)
         if (prev < (uint)_SpawnBudget)
         {
             // spawn at origin with fresh random velocity + reset age and radius
-            p.position.xyz = 0;
+            //p.position.xyz = 0;
+            p.position.xyz = _SpawnPosition;
             p.position.w = _SpawnRadius;
-            float3 dir = RandomDirection(i + 1u);
-            float  spd = Random01(i + 11u) * _MaxInitialSpeed;
+            //float3 dir = RandomDirection(i + 1u);
+            float3 dir = _SpawnDirection + float3(Random01(i + 3u), Random01(i + 5u), Random01(i + 7u)) * 0.01f;
+            float  spd = Random01(i + 11u) * _MaxInitialSpeed + (Random01(i + 9u) * 2.0f - 1.0f) * 0.02f;
             p.velocity.xyz = dir * spd;
             p.velocity.w   = 0; // age = 0 => alive now
         }

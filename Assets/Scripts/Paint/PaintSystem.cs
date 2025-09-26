@@ -5,6 +5,8 @@ namespace Paint
     [RequireComponent(typeof(Particles))]
     public sealed class PaintSystem : MonoBehaviour
     {
+        
+
         [Header("Simulation")]
         public ComputeShader simulationCS;
         public Vector3 boundsExtents = new Vector3(25, 25, 25);
@@ -34,6 +36,11 @@ namespace Paint
         int kernelIntegrate;
         Bounds drawBounds;
 
+        public Vector3 spawnPosition;
+        public Vector3 spawnDirection;
+        public Vector3 spawnColor;
+        public bool emit;
+
         void OnEnable()
         {
             // Check that we support everything
@@ -48,7 +55,7 @@ namespace Paint
                 return;
             }
 
-            // (Optional) require a mesh via Inspector; comment this out if you’ll assign manually.
+            // (Optional) require a mesh via Inspector; comment this out if youï¿½ll assign manually.
             if (mesh == null)
             {
                 // Safer: assign in Inspector. Built-in sphere resource is not guaranteed across pipelines.
@@ -95,7 +102,7 @@ namespace Paint
             particlesOwner.Bind(simulationCS, kernelIntegrate, "_Particles");
             particlesOwner.Bind(renderMat, "_Particles");
 
-            // Optional: we’ll let compute scan all slots
+            // Optional: weï¿½ll let compute scan all slots
             particlesOwner.activeCount = particlesOwner.particleCount;
             UpdateArgsBuffer();
         }
@@ -121,7 +128,7 @@ namespace Paint
             simulationCS.SetFloat("_SpawnRadius", spawnRadius);
 
             // emit control
-            bool emit = Input.GetKey(KeyCode.Space);
+            //bool emit = Input.GetKey(KeyCode.Space);
             simulationCS.SetInt("_EmitEnabled", emit ? 1 : 0);
 
             // per-frame spawn budget (particles this frame)
@@ -138,6 +145,10 @@ namespace Paint
                 // spawnCarry = 0f;
             }
             simulationCS.SetInt("_SpawnBudget", budget);
+
+            simulationCS.SetVector("_SpawnPosition", spawnPosition);
+            simulationCS.SetVector("_SpawnDirection", spawnDirection);
+            simulationCS.SetVector("_SpawnColor", spawnColor);
 
             // reset GPU counter to 0 each frame
             uint[] zero = { 0u };
@@ -170,7 +181,7 @@ namespace Paint
 
             uint[] args = { indexCount, instanceCnt, indexStart, baseVertex, 0u };
 
-            if (args[1] == 0) Debug.LogWarning("Draw args instance count is 0 — nothing will render.");
+            if (args[1] == 0) Debug.LogWarning("Draw args instance count is 0 ï¿½ nothing will render.");
 
             //Debug.Log("Number of instances: " + args[1]);
             argsBuffer.SetData(args);

@@ -72,6 +72,9 @@ public class ImuUdpLogger : MonoBehaviour
         public float hzSmoothed;
         public volatile bool seen;
         public double lastSeenSeconds; // stopwatch time (seconds)
+
+        public bool hasColor;
+        public Color32 color32;
     }
 
     // Runtime player rig bound to a deviceId
@@ -82,6 +85,7 @@ public class ImuUdpLogger : MonoBehaviour
         public Transform reference; // rotates with phone
         public Transform tip;       // brush tip position
         public float lastFireTime = -999f;
+        public Color tipColor = Color.white;
     }
 
     readonly object _lock = new object();
@@ -138,7 +142,8 @@ public class ImuUdpLogger : MonoBehaviour
     void RecvLoop()
     {
         var ep = new IPEndPoint(IPAddress.Any, 0);
-        const int MinPacketSize = 1 + 1 + 2 + 8 + 13 * 4;
+        const int MinPacketSize = 1 + 1 + 2 + 8 + 13 * 4; // base (64 bytes)
+        const int ColorBytes = 4; // optional RGBA appended (68 bytes total)
 
         while (running)
         {
@@ -180,6 +185,18 @@ public class ImuUdpLogger : MonoBehaviour
                     st.packetsSinceLastLog++;
                     st.seen = true;
                     st.lastSeenSeconds = sw.Elapsed.TotalSeconds;
+
+                    // Parse optional RGBA color (appended by server). If present, mark as available.
+                    if (data.Length >= MinPacketSize + ColorBytes)
+                    {
+                        int cOff = MinPacketSize; // color starts right after base payload
+                        byte cr = data[cOff + 0];
+                        byte cg = data[cOff + 1];
+                        byte cb = data[cOff + 2];
+                        byte ca = data[cOff + 3];
+                        st.color32 = new Color32(cr, cg, cb, ca);
+                        st.hasColor = true;
+                    }
                 }
             }
             catch (SocketException) { if (!running) break; }
@@ -198,10 +215,9 @@ public class ImuUdpLogger : MonoBehaviour
             {
                 var st = kv.Value;
 
-                // Spawn rig on first sight, with left→right slots and maxPlayers cap
-                if (!rigs.ContainsKey(kv.Key))
+                // Spawn rig when first seen AND color has arrived, with left→right slots and maxPlayers cap
+                if (!rigs.ContainsKey(kv.Key) && st.hasColor)
                 {
-                    // If device is not already queued, add to order
                     if (!spawnOrder.Contains(kv.Key))
                     {
                         if (spawnOrder.Count >= maxPlayers)
@@ -214,7 +230,29 @@ public class ImuUdpLogger : MonoBehaviour
 
                     int slot = spawnOrder.IndexOf(kv.Key);
                     Vector3 spawnPos = GetSlotPosition(slot);
-                    rigs[kv.Key] = CreateRig(kv.Key, spawnPos);
+                    var newRig = CreateRig(kv.Key, spawnPos);
+                    // Initialize rig tip color from device state
+                    newRig.tipColor = (Color)st.color32;
+                    // Apply immediately to its renderer
+                    var rend = newRig.root ? newRig.root.GetComponentInChildren<Renderer>() : null;
+                    if (rend != null)
+                    {
+                        var mats = rend.materials;
+                        for (int i = 0; i < mats.Length; i++)
+                        {
+                            if (mats[i].name.StartsWith("TipMaterial"))
+                            {
+                                mats[i].color = newRig.tipColor;
+                            }
+                        }
+                        if (mats.Length == 1)
+                        {
+                            mats[0].color = newRig.tipColor;
+                        }
+                        rend.materials = mats;
+                        SetRendererColor(rend, newRig.tipColor);
+                    }
+                    rigs[kv.Key] = newRig;
                 }
 
                 // Logging per device
@@ -250,6 +288,29 @@ public class ImuUdpLogger : MonoBehaviour
 
                     if (rig.reference) rig.reference.rotation = phoneToUnity;
 
+                    // If device color updated, repaint rig
+                    if (st.hasColor)
+                    {
+                        Color newColor = (Color)st.color32;
+                        if (rig.tipColor != newColor)
+                        {
+                            rig.tipColor = newColor;
+                            var rr = rig.root ? rig.root.GetComponentInChildren<Renderer>() : null;
+                            if (rr != null)
+                            {
+                                var matsR = rr.materials;
+                                for (int mi = 0; mi < matsR.Length; mi++)
+                                {
+                                    if (matsR[mi].name.StartsWith("TipMaterial"))
+                                        matsR[mi].color = rig.tipColor;
+                                }
+                                if (matsR.Length == 1) matsR[0].color = rig.tipColor;
+                                rr.materials = matsR;
+                                SetRendererColor(rr, rig.tipColor);
+                            }
+                        }
+                    }
+
                     // Accel in world space
                     Vector3 accelWorld = phoneToUnity * st.accel;
                     float aMag = accelWorld.magnitude;
@@ -259,7 +320,8 @@ public class ImuUdpLogger : MonoBehaviour
                     {
                         FireProjectile(
                             origin: rig.tip ? rig.tip.position : (rig.reference ? rig.reference.position : Vector3.zero),
-                            direction: accelWorld
+                            direction: accelWorld,
+                            tipColor: rig.tipColor
                         );
                         rig.lastFireTime = now;
                     }
@@ -308,6 +370,20 @@ public class ImuUdpLogger : MonoBehaviour
             rig.reference = rig.root.transform;
             var tip = rig.root.transform.Find("brush");
             rig.tip = tip ? tip : rig.root.transform;
+
+            var rend = rig.root.GetComponentInChildren<Renderer>();
+            if (rend != null)
+            {
+                var mats = rend.materials; // per-instance copies
+                for (int i = 0; i < mats.Length; i++)
+                {
+                    if (mats[i].name.StartsWith("TipMaterial"))
+                        mats[i].color = rig.tipColor;
+                }
+                if (mats.Length == 1) mats[0].color = rig.tipColor;
+                rend.materials = mats;
+                SetRendererColor(rend, rig.tipColor);
+            }
         }
         else
         {
@@ -322,6 +398,14 @@ public class ImuUdpLogger : MonoBehaviour
             tipObj.transform.localScale = Vector3.one * 0.05f;
             tipObj.transform.localPosition = new Vector3(0, 0, 0.1f);
 
+            var tipRend = tipObj.GetComponent<Renderer>();
+            if (tipRend != null)
+            {
+                var mat = tipRend.material; // instance
+                mat.color = rig.tipColor;
+                SetRendererColor(tipRend, rig.tipColor);
+            }
+
             rig.root = root;
             rig.reference = root.transform;
             rig.tip = tipObj.transform;
@@ -332,7 +416,26 @@ public class ImuUdpLogger : MonoBehaviour
         return rig;
     }
 
-    void FireProjectile(Vector3 origin, Vector3 direction)
+    // Helper to set renderer color for SRP and built-in pipeline compatibility
+    static void SetRendererColor(Renderer r, Color c)
+    {
+        if (r == null) return;
+        // Use a MaterialPropertyBlock so we don't rely on material name matching or mutate assets
+        var mpb = new MaterialPropertyBlock();
+        r.GetPropertyBlock(mpb);
+        // Try common color properties
+        if (r.sharedMaterial != null && r.sharedMaterial.HasProperty("_BaseColor"))
+        {
+            mpb.SetColor("_BaseColor", c);
+        }
+        if (r.sharedMaterial != null && r.sharedMaterial.HasProperty("_Color"))
+        {
+            mpb.SetColor("_Color", c);
+        }
+        r.SetPropertyBlock(mpb);
+    }
+
+    void FireProjectile(Vector3 origin, Vector3 direction, Color tipColor)
     {
         if (projectilePrefab == null)
         {
@@ -342,6 +445,15 @@ public class ImuUdpLogger : MonoBehaviour
             var rb0 = sphere.AddComponent<Rigidbody>();
             rb0.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             sphere.transform.position = origin;
+
+            var sr = sphere.GetComponent<Renderer>();
+            if (sr != null)
+            {
+                var m = sr.material; // instance per projectile
+                m.color = tipColor;
+                SetRendererColor(sr, tipColor);
+            }
+
             rb0.velocity = direction.normalized * launchSpeed;
             Destroy(sphere, projectileLifetime);
             return;
@@ -352,6 +464,28 @@ public class ImuUdpLogger : MonoBehaviour
         if (rb == null) rb = go.AddComponent<Rigidbody>();
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         rb.velocity = direction.normalized * launchSpeed;
+
+        // Color the projectile's tip/material to match the rig's tip color
+        var pr = go.GetComponentInChildren<Renderer>();
+        if (pr != null)
+        {
+            var mats = pr.materials; // instance per projectile
+            bool painted = false;
+            for (int i = 0; i < mats.Length; i++)
+            {
+                if (mats[i].name.StartsWith("TipMaterial"))
+                {
+                    mats[i].color = tipColor;
+                    painted = true;
+                }
+            }
+            if (!painted && mats.Length == 1)
+            {
+                mats[0].color = tipColor;
+            }
+            pr.materials = mats;
+            SetRendererColor(pr, tipColor);
+        }
 
         if (projectileLifetime > 0f) Destroy(go, projectileLifetime);
     }

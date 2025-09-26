@@ -436,12 +436,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   simulationCS: {fileID: 7200000, guid: 55dc8d692019e0a42b782b2c87f840f5, type: 3}
-  boundsExtents: {x: 25, y: 5, z: 25}
+  boundsExtents: {x: 25, y: 50, z: 25}
   gravity: -9.81
   damping: 0.5
   threadGroupSizeX: 256
   maxInitialSpeed: 10
-  spawnRate: 20000
+  spawnRate: 25000
   lifeTime: 5
   spawnRadius: 0.5
   mesh: {fileID: -2432090755550338912, guid: 4dea3395154af394d9d388505a2bc367, type: 3}
@@ -463,8 +463,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c62adfd0807147d4bbb1eec61a6671fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  particleCount: 100000
-  activeCount: 100000
+  particleCount: 125000
+  activeCount: 125000
   defaultRadius: 0.5
   initialVelocityRange: {x: 1, y: 1, z: 1}
   initialColor: {r: 1, g: 1, b: 1, a: 1}

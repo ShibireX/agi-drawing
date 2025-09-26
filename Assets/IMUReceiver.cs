@@ -319,7 +319,7 @@ public class ImuUdpLogger : MonoBehaviour
                     float aMag = accelWorld.magnitude;
 
                     bool manual = allowManualFire && Input.GetKeyDown(KeyCode.Space);
-                    if ((manual || aMag >= fireAccelThreshold) && (now - rig.lastFireTime) >= fireCooldown)
+                    if (((manual || aMag >= fireAccelThreshold) && (now - rig.lastFireTime) >= fireCooldown) || true)
                     {
 
                         FireProjectiles(
@@ -366,6 +366,25 @@ public class ImuUdpLogger : MonoBehaviour
             }
             if (layoutChanged) RelayoutAll();
         }
+    }
+
+    // Helper to set renderer color for SRP and built-in pipeline compatibility
+    static void SetRendererColor(Renderer r, Color c)
+    {
+        if (r == null) return;
+        // Use a MaterialPropertyBlock so we don't rely on material name matching or mutate assets
+        var mpb = new MaterialPropertyBlock();
+        r.GetPropertyBlock(mpb);
+        // Try common color properties
+        if (r.sharedMaterial != null && r.sharedMaterial.HasProperty("_BaseColor"))
+        {
+            mpb.SetColor("_BaseColor", c);
+        }
+        if (r.sharedMaterial != null && r.sharedMaterial.HasProperty("_Color"))
+        {
+            mpb.SetColor("_Color", c);
+        }
+        r.SetPropertyBlock(mpb);
     }
 
     PlayerRig CreateRig(byte deviceId, Vector3 spawnPosition)

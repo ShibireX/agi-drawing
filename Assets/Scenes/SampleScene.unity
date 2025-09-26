@@ -303,7 +303,7 @@ Transform:
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalPosition: {x: 0, y: 0, z: -15}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -361,11 +361,11 @@ MonoBehaviour:
   gravity: -9.81
   damping: 0.5
   threadGroupSizeX: 256
-  maxInitialSpeed: 5
-  spawnRate: 19000
+  maxInitialSpeed: 10
+  spawnRate: 50000
   lifeTime: 5
-  spawnRadius: 0.1
-  mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  spawnRadius: 0.05
+  mesh: {fileID: -2432090755550338912, guid: 4dea3395154af394d9d388505a2bc367, type: 3}
   renderMat: {fileID: 2100000, guid: 8023c82a80376934aa948d37fe4f1906, type: 2}
   baseColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &1475877831
@@ -380,8 +380,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c62adfd0807147d4bbb1eec61a6671fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  particleCount: 100000
-  activeCount: 100000
+  particleCount: 250000
+  activeCount: 250000
   defaultRadius: 0.1
   initialVelocityRange: {x: 1, y: 1, z: 1}
   initialColor: {r: 1, g: 1, b: 1, a: 1}

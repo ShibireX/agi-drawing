@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 1757803834423105526}
   m_Layer: 0
   m_Name: Paint_Sphere
-  m_TagString: Untagged
+  m_TagString: Paint
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

@@ -41,7 +41,7 @@ public class FullscreenCanvas : MonoBehaviour
     {
         // Create the quad
         canvasQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        canvasQuad.name = "SimpleCanvasQuad";
+        canvasQuad.name = "CanvasQuad";
 
         // Place in front of the camera
         float d = Mathf.Max(distanceFromCamera, targetCamera.nearClipPlane + 0.01f);

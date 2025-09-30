@@ -35,9 +35,9 @@ public class ImuUdpLogger : MonoBehaviour
     [Tooltip("World-space anchor for the RIGHT-most spawn. If null, a fallback position is used.")]
     public Transform spawnRight;
     [Tooltip("Fallback left position used if spawnLeft is null.")]
-    public Vector3 fallbackLeft = new Vector3(-2f, 1f, 0f);
+    public Vector3 fallbackLeft = new Vector3(0f, 0f, 0f);
     [Tooltip("Fallback right position used if spawnRight is null.")]
-    public Vector3 fallbackRight = new Vector3( 2f, 1f, 0f);
+    public Vector3 fallbackRight = new Vector3(0f, 0f, 0f);
 
     [Header("Launch Settings (shared for all players)")]
     [Tooltip("Projectile prefab with a Rigidbody (a sphere).")]
@@ -319,7 +319,7 @@ public class ImuUdpLogger : MonoBehaviour
                     float aMag = accelWorld.magnitude;
 
                     bool manual = allowManualFire && Input.GetKeyDown(KeyCode.Space);
-                    if (((manual || aMag >= fireAccelThreshold) && (now - rig.lastFireTime) >= fireCooldown) || true)
+                    if (((manual || aMag >= fireAccelThreshold) && (now - rig.lastFireTime) >= fireCooldown) || false)
                     {
 
                         FireProjectiles(
@@ -450,7 +450,7 @@ public class ImuUdpLogger : MonoBehaviour
 
         paintSystem.spawnPosition = origin;
         paintSystem.spawnDirection = direction.normalized;
-        paintSystem.spawnColor = new Vector3(1.0f, 1.0f, 1.0f);
+        paintSystem.spawnColor = new Vector3(tipColor.r / 255.0f, tipColor.g / 255.0f, tipColor.b / 255.0f);
         paintSystem.emit = true;
     }
 

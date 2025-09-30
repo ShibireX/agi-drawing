@@ -510,11 +510,16 @@ MonoBehaviour:
   damping: 0.05
   airResistance: 0.3
   threadGroupSizeX: 256
-  maxInitialSpeed: 6
-  spreadAngle: 0.21
-  spawnRate: 25000
+  maxInitialSpeed: 8
+  spreadAngle: 0.4
+  forwardBias: 0.6
+  forwardDirection: {x: 0, y: 0, z: 1}
+  spawnRate: 100000
   lifeTime: 5
-  spawnRadius: 0.03
+  fadeOutDuration: 1
+  spawnRadius: 0.015
+  movementThreshold: 100
+  debugMovement: 0
   mesh: {fileID: -2432090755550338912, guid: 4dea3395154af394d9d388505a2bc367, type: 3}
   renderMat: {fileID: 2100000, guid: 8023c82a80376934aa948d37fe4f1906, type: 2}
   baseColor: {r: 1, g: 1, b: 1, a: 1}
@@ -536,7 +541,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   particleCount: 125000
   activeCount: 125000
-  defaultRadius: 0.01
+  defaultRadius: 0.005
   initialVelocityRange: {x: 1, y: 1, z: 1}
   initialColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!4 &1475877832

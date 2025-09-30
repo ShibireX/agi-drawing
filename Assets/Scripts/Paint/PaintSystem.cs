@@ -13,17 +13,28 @@ namespace Paint
         
         public float gravity = -9.81f;
         public float damping = 0.98f;
+        [Range(0f, 1f)] public float airResistance = 0.3f;  // slows particles over time for smoother arcs
         [Min(1)] public uint threadGroupSizeX = 256;
 
         public float maxInitialSpeed = 3f;
+        [Range(0f, 1f)] public float spreadAngle = 0.3f;  // cone spread in radians (~17 degrees default)
+        [Range(0f, 1f)] public float forwardBias = 0.7f;  // how much to bias towards forward (0=follow brush exactly, 1=always forward)
+        public Vector3 forwardDirection = new Vector3(0, 0, 1);  // direction towards canvas
 
         [Header("Spawning")]
         public float spawnRate = 5000f;   // particles per second while Space is held
         public float lifeTime = 3f;       // seconds
+        [Tooltip("How long (in seconds) before the end of lifetime that particles start fading out")]
+        public float fadeOutDuration = 1f;  // seconds
         public float spawnRadius = 0.1f;  // matches your Particles.defaultRadius
+        [Tooltip("Minimum brush movement speed (units/sec) required to spawn particles. Prevents painting during small adjustments.")]
+        public float movementThreshold = 0.5f;  // units per second
+        [Tooltip("Show debug info about movement speed in console")]
+        public bool debugMovement = false;
 
         ComputeBuffer spawnCountBuffer;    // 1 uint
         float spawnCarry;
+        private float currentMovementSpeed;
 
         [Header("Rendering")]
         public Mesh mesh;            // assign a low-poly sphere
@@ -40,6 +51,9 @@ namespace Paint
         public Vector3 spawnDirection;
         public Vector3 spawnColor;
         public bool emit;
+
+        private Vector3 prevSpawnPosition;
+        private Vector3 prevSpawnDirection;
 
         void OnEnable()
         {
@@ -122,18 +136,41 @@ namespace Paint
             simulationCS.SetFloats("_BoundsExtents", boundsExtents.x, boundsExtents.y, boundsExtents.z);
             simulationCS.SetFloat("_Gravity", gravity);
             simulationCS.SetFloat("_Damping", damping);
+            simulationCS.SetFloat("_AirResistance", airResistance);
             simulationCS.SetFloat("_DeltaTime", Time.deltaTime);
             simulationCS.SetFloat("_MaxInitialSpeed", maxInitialSpeed);
             simulationCS.SetFloat("_LifeTime", lifeTime);
+            simulationCS.SetFloat("_FadeOutDuration", fadeOutDuration);
             simulationCS.SetFloat("_SpawnRadius", spawnRadius);
+            simulationCS.SetFloat("_SpreadAngle", spreadAngle);
+            simulationCS.SetFloat("_ForwardBias", forwardBias);
+            simulationCS.SetVector("_ForwardDirection", forwardDirection.normalized);
+
+            // Calculate brush movement speed
+            float movementSpeed = 0f;
+            if (Time.deltaTime > 0)
+            {
+                float distance = Vector3.Distance(spawnPosition, prevSpawnPosition);
+                movementSpeed = distance / Time.deltaTime;
+            }
+            currentMovementSpeed = movementSpeed;
+
+            // Check if movement exceeds threshold
+            bool shouldEmit = emit && (movementSpeed >= movementThreshold);
+
+            // Debug output
+            if (debugMovement && emit)
+            {
+                Debug.Log($"Movement Speed: {movementSpeed:F2} u/s | Threshold: {movementThreshold:F2} | Spawning: {shouldEmit}");
+            }
 
             // emit control
             //bool emit = Input.GetKey(KeyCode.Space);
-            simulationCS.SetInt("_EmitEnabled", emit ? 1 : 0);
+            simulationCS.SetInt("_EmitEnabled", shouldEmit ? 1 : 0);
 
             // per-frame spawn budget (particles this frame)
             int budget = 0;
-            if (emit)
+            if (shouldEmit)
             {
                 float want = spawnRate * Time.deltaTime + spawnCarry;
                 budget = Mathf.FloorToInt(want);
@@ -149,6 +186,8 @@ namespace Paint
             simulationCS.SetVector("_SpawnPosition", spawnPosition);
             simulationCS.SetVector("_SpawnDirection", spawnDirection);
             simulationCS.SetVector("_SpawnColor", spawnColor);
+            simulationCS.SetVector("_PrevSpawnPosition", prevSpawnPosition);
+            simulationCS.SetVector("_PrevSpawnDirection", prevSpawnDirection);
 
             // reset GPU counter to 0 each frame
             uint[] zero = { 0u };
@@ -165,6 +204,9 @@ namespace Paint
             // Draw all instances; dead ones have radius=0 so they vanish
             UpdateArgsBuffer(); // set instance count = particleCount (or activeCount if you keep them equal)
             Graphics.DrawMeshInstancedIndirect(mesh, 0, renderMat, drawBounds, argsBuffer);
+
+            prevSpawnPosition = spawnPosition;
+            prevSpawnDirection = spawnDirection;
         }
 
         void UpdateArgsBuffer()

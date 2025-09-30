@@ -7,10 +7,11 @@ Shader "Unlit/InstancedParticlesUnlit-BIRP"
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" "Queue"="Geometry" }
+        Tags { "RenderType"="Transparent" "Queue"="Transparent" }
         Pass
         {
-            ZWrite On
+            ZWrite Off
+            Blend SrcAlpha OneMinusSrcAlpha
             Cull Back
 
             HLSLPROGRAM

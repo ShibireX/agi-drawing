@@ -13,18 +13,25 @@ int   _ActiveCount;      // we will set this to particleCount from CPU
 float _DeltaTime;
 float _Gravity;
 float _Damping;
+float _AirResistance;   // drag coefficient
 float3 _BoundsExtents;
 float _MaxInitialSpeed;
 float _LifeTime;
+float _FadeOutDuration;  // how long before death to start fading
 float _SpawnRadius;      // radius to assign on spawn
+float _SpreadAngle;      // cone spread angle in radians
+float _ForwardBias;      // 0 to 1, how much to bias towards forward direction
 int   _EmitEnabled;      // 0/1
 int   _SpawnBudget;      // max spawns allowed this frame
 
 float3 _SpawnPosition;
 float3 _SpawnDirection;
 float3 _SpawnColor;
+float3 _ForwardDirection; // preferred launch direction (towards canvas)
 
-// rng helpers (same as before)
+float3 _PrevSpawnPosition;
+float3 _PrevSpawnDirection;
+
 uint Hash(uint seed) {
     seed ^= 2747636419u;
     seed *= 2654435769u;
@@ -45,6 +52,40 @@ float3 RandomDirection(uint seed)
     return (all(d == 0)) ? float3(0,1,0) : normalize(d);
 }
 
+float3 GenPosition(uint i)
+{
+    float t = Random01(i + 1337u);
+
+    return (1.0f - t) * _PrevSpawnPosition + t * _SpawnPosition;
+}
+
+float3 GenDirection(uint i)
+{
+    float t = Random01(i + 1337u);
+
+    return (1.0f - t) * _PrevSpawnDirection + t * _SpawnDirection;
+}
+
+// Generate a random direction within a cone around the base direction
+float3 RandomConeDirection(float3 baseDir, float coneAngle, uint seed)
+{
+    // Generate random point on a disk
+    float angle = Random01(seed * 13u) * 6.28318530718f; // 2*PI
+    float radius = Random01(seed * 17u);
+    
+    // Create perpendicular vectors to baseDir
+    float3 up = abs(baseDir.y) < 0.99f ? float3(0, 1, 0) : float3(1, 0, 0);
+    float3 right = normalize(cross(up, baseDir));
+    float3 forward = cross(right, up);
+    
+    // Apply cone angle
+    float spread = tan(coneAngle) * radius;
+    float2 disk = float2(cos(angle), sin(angle)) * spread;
+    
+    float3 dir = normalize(baseDir + right * disk.x + forward * disk.y);
+    return dir;
+}
+
 [numthreads(256,1,1)]
 void Integrate(uint3 tid : SV_DispatchThreadID)
 {
@@ -55,22 +96,33 @@ void Integrate(uint3 tid : SV_DispatchThreadID)
 
     bool isDead = (p.velocity.w < 0);
 
-    // Try to (re)spawn if dead and emitting this frame
     if (isDead && (_EmitEnabled != 0) && (_SpawnBudget > 0))
     {
         uint prev;
         InterlockedAdd(_SpawnedCount[0], 1, prev); // atomic ticket
         if (prev < (uint)_SpawnBudget)
         {
-            // spawn at origin with fresh random velocity + reset age and radius
-            //p.position.xyz = 0;
-            p.position.xyz = _SpawnPosition;
+            p.position.xyz = GenPosition(i + 17u);
             p.position.w = _SpawnRadius;
-            //float3 dir = RandomDirection(i + 1u);
-            float3 dir = _SpawnDirection + (float3(Random01(i + 3u), Random01(i + 5u), Random01(i + 7u)) * 2.0f - 1.0f) * 0.25f;
-            float  spd = Random01(i + 11u) * _MaxInitialSpeed + (Random01(i + 9u) * 2.0f - 1.0f) * 0.2f;
-            p.velocity.xyz = normalize(dir) * spd;
+            
+            // Get the base direction from brush motion
+            float3 brushDir = GenDirection(i + 17u);
+            
+            // Blend brush direction with forward direction to reduce chaotic launches
+            // forwardBias = 0 means pure brush direction, 1 means pure forward
+            float3 blendedDir = lerp(brushDir, _ForwardDirection, _ForwardBias);
+            float3 baseDir = normalize(blendedDir);
+            
+            // Create a cone of particles around the blended direction
+            float3 dir = RandomConeDirection(baseDir, _SpreadAngle, i);
+            
+            // Speed variation: 0.5 to 1.0 of max speed for natural variation
+            float spd = (0.5f + Random01(i + 11u) * 0.5f) * _MaxInitialSpeed;
+
+            p.velocity.xyz = dir * spd;
             p.velocity.w   = 0; // age = 0 => alive now
+
+            p.color = float4(_SpawnColor, 1.0f);
         }
         else
         {
@@ -94,23 +146,52 @@ void Integrate(uint3 tid : SV_DispatchThreadID)
     p.velocity.w += _DeltaTime;    // age
     if (p.velocity.w >= _LifeTime)
     {
-        // die: mark as dead and make invisible
         p.velocity.w = -1;
         p.position.w = 0;
         _Particles[i] = p;
         return;
     }
 
+    // Calculate fade based on age
+    float timeRemaining = _LifeTime - p.velocity.w;
+    float fadeStart = _FadeOutDuration;
+    if (timeRemaining < fadeStart && fadeStart > 0)
+    {
+        // Fade from 1.0 to 0.0 during the last fadeStart seconds
+        float fadeProgress = timeRemaining / fadeStart;
+        p.color.w = fadeProgress;
+    }
+    else
+    {
+        p.color.w = 1.0f; // fully opaque
+    }
+
     // gravity
     p.velocity.xyz += float3(0, _Gravity, 0) * _DeltaTime;
+    
+    // air resistance (drag) - creates smoother, more natural arcs
+    p.velocity.xyz *= (1.0f - _AirResistance * _DeltaTime);
+
+    const float3 dimensions = float3(0.7f, 0.4f, 0.02f) * 0.5f * 5.0f;
+    if (p.position.x > -dimensions.x && p.position.x < dimensions.x &&
+        p.position.y > -dimensions.y && p.position.y < dimensions.y &&
+        p.position.z > -dimensions.z && p.position.z < dimensions.z)
+    {
+        // Hit canvas, stop moving
+        p.velocity.x = 0;
+        p.velocity.y = 0;
+        p.velocity.z = 0;
+    }
+        
 
     // integrate
     p.position.xyz += p.velocity.xyz * _DeltaTime;
 
     // bounce AABB with damping
-    float3 half = _BoundsExtents;
-    float r = p.position.w;
+    //float3 half = _BoundsExtents;
+    //float r = p.position.w;
 
+    /*
     if (p.position.x < -half.x + r) { p.position.x = -half.x + r; p.velocity.x *= -_Damping; }
     if (p.position.x >  half.x - r) { p.position.x =  half.x - r; p.velocity.x *= -_Damping; }
 
@@ -119,6 +200,7 @@ void Integrate(uint3 tid : SV_DispatchThreadID)
 
     if (p.position.z < -half.z + r) { p.position.z = -half.z + r; p.velocity.z *= -_Damping; }
     if (p.position.z >  half.z - r) { p.position.z =  half.z - r; p.velocity.z *= -_Damping; }
+    */
 
     _Particles[i] = p;
 }

@@ -17,7 +17,7 @@ public class ImuUdpLogger : MonoBehaviour
     [Header("Logging")]
     public float logIntervalSeconds = 2f;
     public bool showHud = true;
-
+    public float aMag;
     // --------- Player rig / spawning ---------
     [Header("Player Rig Spawning")]
     [Tooltip("Prefab that contains a root with a visible reference (e.g., a cube) and a child named 'Tip' used as brush tip. If null, a simple cube + sphere tip will be created at runtime.")]
@@ -320,7 +320,7 @@ public class ImuUdpLogger : MonoBehaviour
 
                     // Accel in world space
                     Vector3 accelWorld = phoneToUnity * st.accel;
-                    float aMag = accelWorld.magnitude;
+                    aMag = accelWorld.magnitude;
 
                     bool manual = allowManualFire && Input.GetKeyDown(KeyCode.Space);
                     if (((manual || aMag >= fireAccelThreshold) && (now - rig.lastFireTime) >= fireCooldown) || false)

@@ -9,7 +9,10 @@ using UnityEngine;
 public class BrushWiggle : MonoBehaviour
 {
 
-    public ImuUdpLogger ImuUdpLogger;
+    [SerializeField] public Paint.PaintSystem paintSystem;
+
+    [SerializeField] public ImuUdpLogger imuUdpLogger;
+
     public Transform[] bones;
     [SerializeField] public Transform brushroot;
 
@@ -29,6 +32,11 @@ public class BrushWiggle : MonoBehaviour
 
     void Start()
     {
+        if (imuUdpLogger == null)
+            imuUdpLogger = FindObjectOfType<ImuUdpLogger>();
+
+        if (paintSystem == null)
+            paintSystem = FindObjectOfType<Paint.PaintSystem>();
         bonestojiggle = new List<WiggleBone>();
         // statiskt ben så skippar första, antar att den finns i listan. inkludera alla ben 
         for (int i = 1; i < bones.Length; i++)
@@ -44,38 +52,54 @@ public class BrushWiggle : MonoBehaviour
 
     public void ApplyWiggle()
     {
-      Vector3 brushEuler = brushroot.localEulerAngles;
+        Vector3 brushEuler = brushroot.localEulerAngles;
         brushEuler = NormalizeEuler(brushEuler);
+
 
         for (int i = 0; i < bonestojiggle.Count; i++)
         {
-            WiggleBone wb = bonestojiggle[i];
 
-            // tippen ska röra sig i motsatt riktning
+            WiggleBone wb = bonestojiggle[i];
             Vector3 targetOffset = -brushEuler;
 
-            // clampa så att man inte får galna värden, ska jsutera lite bättre sen
-            float positiv_limit = Mathf.Clamp(MaxAngle - AngleReduction * i, 0, MaxAngle);
-            float negativ_limit = Mathf.Clamp(-MaxAngle + AngleReduction * i, -MaxAngle, 0);
+            int reverseIndex = (bonestojiggle.Count - 1) - i;
+            float positiv_limit = Mathf.Clamp(MaxAngle - AngleReduction * reverseIndex, 0, MaxAngle);
+            float negativ_limit = Mathf.Clamp(-MaxAngle + AngleReduction * reverseIndex, -MaxAngle, 0);
 
             targetOffset.x = Mathf.Clamp(targetOffset.x, negativ_limit, positiv_limit);
-            targetOffset.y = Mathf.Clamp(targetOffset.y, 0, 0);
+            targetOffset.y = 0f; // disable Y wiggle
             targetOffset.z = Mathf.Clamp(targetOffset.z, negativ_limit, positiv_limit);
+            if (paintSystem.currentMovementSpeed >= paintSystem.movementThreshold || imuUdpLogger.aMag >= imuUdpLogger.fireAccelThreshold)
+            {
 
-            // lerpa mellan offset och targetOffset
-            wb.eulerOffset = Vector3.Lerp(
-                wb.eulerOffset,
-                targetOffset,
-                Time.deltaTime * wiggleSpeed
-            );
+                wb.eulerOffset = Vector3.Lerp(
+                    wb.eulerOffset,
+                    targetOffset,
+                    Time.deltaTime * wiggleSpeed
+                );
 
+                wb.T.localEulerAngles = wb.originalLocalEuler + wb.eulerOffset;
+                bonestojiggle[i] = wb;
+            }
+            else
+            {
+                wb.eulerOffset = Vector3.Lerp(
+                    wb.eulerOffset,
+                    wb.originalLocalEuler,
+                    Time.deltaTime * wiggleSpeed
+                );
+                wb.T.localEulerAngles = wb.originalLocalEuler;
+                bonestojiggle[i] = wb;
+            }
+        }
 
-            wb.T.localEulerAngles = wb.originalLocalEuler + wb.eulerOffset;
-            bonestojiggle[i] = wb;
-        }  
     }
 
+    void LateUpdate()
+    {
 
+        ApplyWiggle();
+    }
 
 
     //  blir knas med exempelvis -350 så mappar om vinklarna till -180 till 180

@@ -35,7 +35,7 @@ namespace Paint
 
         ComputeBuffer spawnCountBuffer;    // 1 uint
         float spawnCarry;
-        private float currentMovementSpeed;
+        public float currentMovementSpeed;
 
         [Header("Rendering")]
         public Mesh mesh;            // assign a low-poly sphere
@@ -87,15 +87,15 @@ namespace Paint
             }
 
             // Calculate movement speed for this player
-            float movementSpeed = 0f;
+            float currentMovementSpeed = 0f;
             if (Time.deltaTime > 0)
             {
                 float distance = Vector3.Distance(position, playerPrevPositions[playerId]);
-                movementSpeed = distance / Time.deltaTime;
+                currentMovementSpeed = distance / Time.deltaTime;
             }
 
             // Only add request if movement exceeds threshold
-            if (movementSpeed >= movementThreshold)
+            if (currentMovementSpeed >= movementThreshold)
             {
                 spawnRequests.Add(new SpawnRequest
                 {
@@ -108,7 +108,7 @@ namespace Paint
 
                 if (debugMovement)
                 {
-                    Debug.Log($"Player {playerId} - Speed: {movementSpeed:F2} u/s | Threshold: {movementThreshold:F2} | Spawning: true");
+                    Debug.Log($"Player {playerId} - Speed: {currentMovementSpeed:F2} u/s | Threshold: {movementThreshold:F2} | Spawning: true");
                 }
             }
 

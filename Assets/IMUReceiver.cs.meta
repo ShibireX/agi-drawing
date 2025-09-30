@@ -3,7 +3,12 @@ guid: 1562bb0b94a840d43b4eef535c1cddb9
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - paintSystem: {instanceID: 0}
+  - playerRigPrefab: {instanceID: 0}
+  - spawnLeft: {instanceID: 0}
+  - spawnRight: {instanceID: 0}
+  - projectilePrefab: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

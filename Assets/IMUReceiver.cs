@@ -321,18 +321,13 @@ public class ImuUdpLogger : MonoBehaviour
                     bool manual = allowManualFire && Input.GetKeyDown(KeyCode.Space);
                     if (((manual || aMag >= fireAccelThreshold) && (now - rig.lastFireTime) >= fireCooldown) || false)
                     {
-
                         FireProjectiles(
+                            playerId: kv.Key,
                             origin: rig.tip ? rig.tip.position : (rig.reference ? rig.reference.position : Vector3.zero),
                             direction: accelWorld,
                             tipColor: rig.tipColor
                         );
                         rig.lastFireTime = now;
-                    }
-
-                    else
-                    {
-                        paintSystem.emit = false;
                     }
                 }
 
@@ -444,13 +439,17 @@ public class ImuUdpLogger : MonoBehaviour
         return rig;
     }
     
-    void FireProjectiles(Vector3 origin, Vector3 direction, Color tipColor)
+    void FireProjectiles(int playerId, Vector3 origin, Vector3 direction, Color tipColor)
     {
-        paintSystem.spawnPosition = origin;
-        paintSystem.spawnDirection = direction.normalized;
-        // Unity Color is already in 0-1 range, no need to divide by 255
-        paintSystem.spawnColor = new Vector3(tipColor.r, tipColor.g, tipColor.b);
-        paintSystem.emit = true;
+        if (paintSystem == null) return;
+        
+        // Use the new multi-player RequestSpawn API
+        paintSystem.RequestSpawn(
+            playerId: playerId,
+            position: origin,
+            direction: direction.normalized,
+            color: new Vector3(tipColor.r, tipColor.g, tipColor.b)
+        );
     }
 
     void OnGUI()

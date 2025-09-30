@@ -449,8 +449,8 @@ MonoBehaviour:
   maxPlayers: 4
   spawnLeft: {fileID: 0}
   spawnRight: {fileID: 0}
-  fallbackLeft: {x: 0, y: 0, z: -1}
-  fallbackRight: {x: 0, y: 0, z: -1}
+  fallbackLeft: {x: -1, y: 0, z: -1}
+  fallbackRight: {x: 1, y: 0, z: -1}
   projectilePrefab: {fileID: 0}
   launchSpeed: 6
   fireAccelThreshold: 2

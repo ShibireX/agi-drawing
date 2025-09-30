@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Paint
@@ -47,6 +48,19 @@ namespace Paint
         int kernelIntegrate;
         Bounds drawBounds;
 
+        // Multi-player spawn system
+        public struct SpawnRequest
+        {
+            public Vector3 position;
+            public Vector3 direction;
+            public Vector3 color;
+            public Vector3 prevPosition;
+            public Vector3 prevDirection;
+        }
+
+        private List<SpawnRequest> spawnRequests = new List<SpawnRequest>();
+        
+        // Legacy single-player support (for compatibility)
         public Vector3 spawnPosition;
         public Vector3 spawnDirection;
         public Vector3 spawnColor;
@@ -54,6 +68,54 @@ namespace Paint
 
         private Vector3 prevSpawnPosition;
         private Vector3 prevSpawnDirection;
+
+        // Per-player tracking for movement thresholds
+        private Dictionary<int, Vector3> playerPrevPositions = new Dictionary<int, Vector3>();
+        private Dictionary<int, Vector3> playerPrevDirections = new Dictionary<int, Vector3>();
+
+        /// <summary>
+        /// Request to spawn particles from a specific player/source.
+        /// Call this each frame a player wants to paint.
+        /// </summary>
+        public void RequestSpawn(int playerId, Vector3 position, Vector3 direction, Vector3 color)
+        {
+            // Get or initialize previous position/direction for this player
+            if (!playerPrevPositions.ContainsKey(playerId))
+            {
+                playerPrevPositions[playerId] = position;
+                playerPrevDirections[playerId] = direction;
+            }
+
+            // Calculate movement speed for this player
+            float movementSpeed = 0f;
+            if (Time.deltaTime > 0)
+            {
+                float distance = Vector3.Distance(position, playerPrevPositions[playerId]);
+                movementSpeed = distance / Time.deltaTime;
+            }
+
+            // Only add request if movement exceeds threshold
+            if (movementSpeed >= movementThreshold)
+            {
+                spawnRequests.Add(new SpawnRequest
+                {
+                    position = position,
+                    direction = direction,
+                    color = color,
+                    prevPosition = playerPrevPositions[playerId],
+                    prevDirection = playerPrevDirections[playerId]
+                });
+
+                if (debugMovement)
+                {
+                    Debug.Log($"Player {playerId} - Speed: {movementSpeed:F2} u/s | Threshold: {movementThreshold:F2} | Spawning: true");
+                }
+            }
+
+            // Update tracking
+            playerPrevPositions[playerId] = position;
+            playerPrevDirections[playerId] = direction;
+        }
 
         void OnEnable()
         {
@@ -132,7 +194,7 @@ namespace Paint
 
         void Update()
         {
-            // keep uniforms fresh
+            // Set static uniforms
             simulationCS.SetFloats("_BoundsExtents", boundsExtents.x, boundsExtents.y, boundsExtents.z);
             simulationCS.SetFloat("_Gravity", gravity);
             simulationCS.SetFloat("_Damping", damping);
@@ -146,67 +208,97 @@ namespace Paint
             simulationCS.SetFloat("_ForwardBias", forwardBias);
             simulationCS.SetVector("_ForwardDirection", forwardDirection.normalized);
 
-            // Calculate brush movement speed
-            float movementSpeed = 0f;
-            if (Time.deltaTime > 0)
-            {
-                float distance = Vector3.Distance(spawnPosition, prevSpawnPosition);
-                movementSpeed = distance / Time.deltaTime;
-            }
-            currentMovementSpeed = movementSpeed;
-
-            // Check if movement exceeds threshold
-            bool shouldEmit = emit && (movementSpeed >= movementThreshold);
-
-            // Debug output
-            if (debugMovement && emit)
-            {
-                Debug.Log($"Movement Speed: {movementSpeed:F2} u/s | Threshold: {movementThreshold:F2} | Spawning: {shouldEmit}");
-            }
-
-            // emit control
-            //bool emit = Input.GetKey(KeyCode.Space);
-            simulationCS.SetInt("_EmitEnabled", shouldEmit ? 1 : 0);
-
-            // per-frame spawn budget (particles this frame)
-            int budget = 0;
-            if (shouldEmit)
-            {
-                float want = spawnRate * Time.deltaTime + spawnCarry;
-                budget = Mathf.FloorToInt(want);
-                spawnCarry = want - budget;
-            }
-            else
-            {
-                // optional: keep carry so tapping space still exacts average rate
-                // spawnCarry = 0f;
-            }
-            simulationCS.SetInt("_SpawnBudget", budget);
-
-            simulationCS.SetVector("_SpawnPosition", spawnPosition);
-            simulationCS.SetVector("_SpawnDirection", spawnDirection);
-            simulationCS.SetVector("_SpawnColor", spawnColor);
-            simulationCS.SetVector("_PrevSpawnPosition", prevSpawnPosition);
-            simulationCS.SetVector("_PrevSpawnDirection", prevSpawnDirection);
-
-            // reset GPU counter to 0 each frame
-            uint[] zero = { 0u };
-            spawnCountBuffer.SetData(zero);
-
-            // ensure bindings (cheap)
+            // Ensure bindings
             particlesOwner.Bind(simulationCS, kernelIntegrate, "_Particles");
             particlesOwner.Bind(renderMat, "_Particles");
 
-            // compute & draw over full buffer so spawns can fill any dead slot
-            uint groups = (uint)((particlesOwner.particleCount + threadGroupSizeX - 1) / threadGroupSizeX);
-            if (groups > 0) simulationCS.Dispatch(kernelIntegrate, (int)groups, 1, 1);
+            // Legacy single-player support (for backward compatibility)
+            if (emit)
+            {
+                // Calculate movement speed
+                float movementSpeed = 0f;
+                if (Time.deltaTime > 0)
+                {
+                    float distance = Vector3.Distance(spawnPosition, prevSpawnPosition);
+                    movementSpeed = distance / Time.deltaTime;
+                }
+                currentMovementSpeed = movementSpeed;
+
+                // Check if movement exceeds threshold
+                if (movementSpeed >= movementThreshold)
+                {
+                    spawnRequests.Add(new SpawnRequest
+                    {
+                        position = spawnPosition,
+                        direction = spawnDirection,
+                        color = spawnColor,
+                        prevPosition = prevSpawnPosition,
+                        prevDirection = prevSpawnDirection
+                    });
+
+                    if (debugMovement)
+                    {
+                        Debug.Log($"Legacy - Speed: {movementSpeed:F2} u/s | Threshold: {movementThreshold:F2} | Spawning: true");
+                    }
+                }
+
+                prevSpawnPosition = spawnPosition;
+                prevSpawnDirection = spawnDirection;
+            }
+
+            // Process all spawn requests (multi-player)
+            int totalBudget = 0;
+            if (spawnRequests.Count > 0)
+            {
+                // Divide spawn budget among all active players
+                float budgetPerPlayer = (spawnRate * Time.deltaTime + spawnCarry) / spawnRequests.Count;
+                
+                foreach (var request in spawnRequests)
+                {
+                    int budget = Mathf.FloorToInt(budgetPerPlayer);
+                    totalBudget += budget;
+
+                    // Set per-request spawn data
+                    simulationCS.SetVector("_SpawnPosition", request.position);
+                    simulationCS.SetVector("_SpawnDirection", request.direction);
+                    simulationCS.SetVector("_SpawnColor", request.color);
+                    simulationCS.SetVector("_PrevSpawnPosition", request.prevPosition);
+                    simulationCS.SetVector("_PrevSpawnDirection", request.prevDirection);
+                    simulationCS.SetInt("_SpawnBudget", budget);
+                    simulationCS.SetInt("_EmitEnabled", 1);
+
+                    // Reset GPU counter
+                    uint[] zero = { 0u };
+                    spawnCountBuffer.SetData(zero);
+
+                    // Dispatch compute for this player
+                    uint groups = (uint)((particlesOwner.particleCount + threadGroupSizeX - 1) / threadGroupSizeX);
+                    if (groups > 0) simulationCS.Dispatch(kernelIntegrate, (int)groups, 1, 1);
+                }
+
+                // Update carry with remainder
+                float totalWanted = spawnRate * Time.deltaTime + spawnCarry;
+                spawnCarry = totalWanted - totalBudget;
+            }
+            else
+            {
+                // No spawn requests - still need to update existing particles (aging, physics)
+                simulationCS.SetInt("_EmitEnabled", 0);
+                simulationCS.SetInt("_SpawnBudget", 0);
+                
+                uint[] zero = { 0u };
+                spawnCountBuffer.SetData(zero);
+                
+                uint groups = (uint)((particlesOwner.particleCount + threadGroupSizeX - 1) / threadGroupSizeX);
+                if (groups > 0) simulationCS.Dispatch(kernelIntegrate, (int)groups, 1, 1);
+            }
+
+            // Clear spawn requests for next frame
+            spawnRequests.Clear();
 
             // Draw all instances; dead ones have radius=0 so they vanish
-            UpdateArgsBuffer(); // set instance count = particleCount (or activeCount if you keep them equal)
+            UpdateArgsBuffer();
             Graphics.DrawMeshInstancedIndirect(mesh, 0, renderMat, drawBounds, argsBuffer);
-
-            prevSpawnPosition = spawnPosition;
-            prevSpawnDirection = spawnDirection;
         }
 
         void UpdateArgsBuffer()

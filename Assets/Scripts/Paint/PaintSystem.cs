@@ -41,6 +41,9 @@ namespace Paint
         public Vector3 spawnColor;
         public bool emit;
 
+        private Vector3 prevSpawnPosition;
+        private Vector3 prevSpawnDirection;
+
         void OnEnable()
         {
             // Check that we support everything
@@ -149,6 +152,8 @@ namespace Paint
             simulationCS.SetVector("_SpawnPosition", spawnPosition);
             simulationCS.SetVector("_SpawnDirection", spawnDirection);
             simulationCS.SetVector("_SpawnColor", spawnColor);
+            simulationCS.SetVector("_PrevSpawnPosition", prevSpawnPosition);
+            simulationCS.SetVector("_PrevSpawnDirection", prevSpawnDirection);
 
             // reset GPU counter to 0 each frame
             uint[] zero = { 0u };
@@ -165,6 +170,9 @@ namespace Paint
             // Draw all instances; dead ones have radius=0 so they vanish
             UpdateArgsBuffer(); // set instance count = particleCount (or activeCount if you keep them equal)
             Graphics.DrawMeshInstancedIndirect(mesh, 0, renderMat, drawBounds, argsBuffer);
+
+            prevSpawnPosition = spawnPosition;
+            prevSpawnDirection = spawnDirection;
         }
 
         void UpdateArgsBuffer()

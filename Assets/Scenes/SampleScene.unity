@@ -506,10 +506,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   simulationCS: {fileID: 7200000, guid: 55dc8d692019e0a42b782b2c87f840f5, type: 3}
   boundsExtents: {x: 25, y: 50, z: 25}
-  gravity: -9.81
+  gravity: -5
   damping: 0.05
+  airResistance: 0.3
   threadGroupSizeX: 256
-  maxInitialSpeed: 10
+  maxInitialSpeed: 6
+  spreadAngle: 0.21
   spawnRate: 25000
   lifeTime: 5
   spawnRadius: 0.03

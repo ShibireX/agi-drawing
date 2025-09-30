@@ -446,11 +446,10 @@ public class ImuUdpLogger : MonoBehaviour
     
     void FireProjectiles(Vector3 origin, Vector3 direction, Color tipColor)
     {
-        // TODO: Set variables in particle system script
-
         paintSystem.spawnPosition = origin;
         paintSystem.spawnDirection = direction.normalized;
-        paintSystem.spawnColor = new Vector3(tipColor.r / 255.0f, tipColor.g / 255.0f, tipColor.b / 255.0f);
+        // Unity Color is already in 0-1 range, no need to divide by 255
+        paintSystem.spawnColor = new Vector3(tipColor.r, tipColor.g, tipColor.b);
         paintSystem.emit = true;
     }
 

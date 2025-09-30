@@ -9,12 +9,14 @@ Shader "Unlit/InstancedParticles"
     {
         Tags 
         { 
-            "RenderType"="Opaque" 
+            "RenderType"="Transparent"
+            "Queue"="Transparent"
         }
 
         Pass
         {
-            ZWrite On
+            ZWrite Off
+            Blend SrcAlpha OneMinusSrcAlpha
             Cull Back
 
             HLSLPROGRAM

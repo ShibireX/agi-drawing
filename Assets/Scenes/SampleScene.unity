@@ -444,7 +444,8 @@ MonoBehaviour:
   listenPort: 26761
   logIntervalSeconds: 0.3
   showHud: 1
-  playerRigPrefab: {fileID: 919132149155446097, guid: 186c7d8394bc2ab4290b268f1e855e57, type: 3}
+  aMag: 0
+  playerRigPrefab: {fileID: 4971225736180885182, guid: cd583df9b50381c47a757aebf51cfa92, type: 3}
   despawnAfterSeconds: 15
   maxPlayers: 4
   spawnLeft: {fileID: 0}
@@ -464,7 +465,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d724352ae98a7473db6df8d3eb135b56, type: 3}
   m_Name: 
@@ -474,6 +475,7 @@ MonoBehaviour:
   cubeScale: {x: 10, y: 10, z: 10}
   cubeLifetime: 10
   cubePrefab: {fileID: 0}
+  _t: 0
 --- !u!1 &1475877829
 GameObject:
   m_ObjectHideFlags: 0
@@ -520,6 +522,7 @@ MonoBehaviour:
   spawnRadius: 0.015
   movementThreshold: 100
   debugMovement: 0
+  currentMovementSpeed: 0
   mesh: {fileID: -2432090755550338912, guid: 4dea3395154af394d9d388505a2bc367, type: 3}
   renderMat: {fileID: 2100000, guid: 8023c82a80376934aa948d37fe4f1906, type: 2}
   baseColor: {r: 1, g: 1, b: 1, a: 1}

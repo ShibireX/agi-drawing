@@ -17,7 +17,7 @@ public class ImuUdpLogger : MonoBehaviour
     [Header("Logging")]
     public float logIntervalSeconds = 2f;
     public bool showHud = true;
-
+    public float aMag;
     // --------- Player rig / spawning ---------
     [Header("Player Rig Spawning")]
     [Tooltip("Prefab that contains a root with a visible reference (e.g., a cube) and a child named 'Tip' used as brush tip. If null, a simple cube + sphere tip will be created at runtime.")]
@@ -122,6 +122,9 @@ public class ImuUdpLogger : MonoBehaviour
 
     void Start()
     {
+                    
+        UnityEngine.Debug.Log("script start");
+                    
         try
         {
             sw = Stopwatch.StartNew();
@@ -234,6 +237,7 @@ public class ImuUdpLogger : MonoBehaviour
                     int slot = spawnOrder.IndexOf(kv.Key);
                     Vector3 spawnPos = GetSlotPosition(slot);
                     var newRig = CreateRig(kv.Key, spawnPos);
+   
                     // Initialize rig tip color from device state
                     newRig.tipColor = (Color)st.color32;
                     // Apply immediately to its renderer
@@ -316,7 +320,7 @@ public class ImuUdpLogger : MonoBehaviour
 
                     // Accel in world space
                     Vector3 accelWorld = phoneToUnity * st.accel;
-                    float aMag = accelWorld.magnitude;
+                    aMag = accelWorld.magnitude;
 
                     bool manual = allowManualFire && Input.GetKeyDown(KeyCode.Space);
                     if (((manual || aMag >= fireAccelThreshold) && (now - rig.lastFireTime) >= fireCooldown) || false)
@@ -410,6 +414,7 @@ public class ImuUdpLogger : MonoBehaviour
         }
         else
         {
+            UnityEngine.Debug.Log("Cube spawned");
             // Minimal default: cube as reference + small sphere tip in front
             var root = GameObject.CreatePrimitive(PrimitiveType.Cube);
             root.name = $"PlayerRig_{deviceId}";

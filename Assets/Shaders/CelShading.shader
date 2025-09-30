@@ -16,7 +16,6 @@ Shader "Custom/CelShading"
         [HDR]_Emission("Emission", Color) = (0, 0, 0, 1)
         _OutlineColor("Outline Color", Color) = (0,0,0,1)
         _OutlineThickness("Outline Thickness", Range(0.0,0.05)) = 0.02
-        _ShadowColor("ShadowColor", Color) = (0, 0, 0, 1)
     }
     SubShader
     {

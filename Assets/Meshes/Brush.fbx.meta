@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: feb43d2286a1148fb81a6c00952df874
+guid: 186c7d8394bc2ab4290b268f1e855e57
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
@@ -7,18 +7,18 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Material.001
-    second: {fileID: 2100000, guid: dced527a035b8467796708d0464aa24b, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Material.002
+      name: Metalring
     second: {fileID: 2100000, guid: 5b0a4adebc16841fab200c347c2e00dd, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: Material.003
+      name: brush
     second: {fileID: 2100000, guid: d91742a7f8c7f47e7b570471ad7d40aa, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: shaft
+    second: {fileID: 2100000, guid: dced527a035b8467796708d0464aa24b, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -85,7 +85,7 @@ ModelImporter:
     useFileScale: 1
     strictVertexDataChecks: 0
   tangentSpace:
-    normalSmoothAngle: 59
+    normalSmoothAngle: 60
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4

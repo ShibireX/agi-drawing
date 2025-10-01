@@ -89,6 +89,7 @@ public class ImuUdpLogger : MonoBehaviour
         public Transform tip;       // brush tip position
         public float lastFireTime = -999f;
         public Color tipColor = Color.white;
+        public BrushWiggle brushWiggle; // reference to this rig's wiggle component
     }
 
     readonly object _lock = new object();
@@ -321,6 +322,12 @@ public class ImuUdpLogger : MonoBehaviour
                     // Accel in world space
                     Vector3 accelWorld = phoneToUnity * st.accel;
                     aMag = accelWorld.magnitude;
+                    
+                    // Update this rig's BrushWiggle with device-specific acceleration
+                    if (rig.brushWiggle)
+                    {
+                        rig.brushWiggle.deviceAMag = aMag;
+                    }
 
                     bool manual = allowManualFire && Input.GetKeyDown(KeyCode.Space);
                     if (((manual || aMag >= fireAccelThreshold) && (now - rig.lastFireTime) >= fireCooldown) || false)
@@ -438,6 +445,16 @@ public class ImuUdpLogger : MonoBehaviour
             rig.reference = root.transform;
             rig.tip = tipObj.transform;
             root.transform.position = spawnPosition;
+        }
+
+        // Get BrushWiggle component if present and configure it
+        if (rig.root)
+        {
+            rig.brushWiggle = rig.root.GetComponentInChildren<BrushWiggle>();
+            if (rig.brushWiggle)
+            {
+                rig.brushWiggle.fireAccelThreshold = fireAccelThreshold;
+            }
         }
 
         UnityEngine.Debug.Log($"[ImuUdpLogger] Spawned rig for device {deviceId}.");

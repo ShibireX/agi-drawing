@@ -11,7 +11,12 @@ public class BrushWiggle : MonoBehaviour
 
     [SerializeField] public Paint.PaintSystem paintSystem;
 
-    [SerializeField] public ImuUdpLogger imuUdpLogger;
+    // Per-instance acceleration magnitude (set by IMUReceiver for each device)
+    [HideInInspector]
+    public float deviceAMag = 0f;
+    
+    [HideInInspector]
+    public float fireAccelThreshold = 2.0f;
 
     public Transform[] bones;
     [SerializeField] public Transform brushroot;
@@ -32,9 +37,6 @@ public class BrushWiggle : MonoBehaviour
 
     void Start()
     {
-        if (imuUdpLogger == null)
-            imuUdpLogger = FindObjectOfType<ImuUdpLogger>();
-
         if (paintSystem == null)
             paintSystem = FindObjectOfType<Paint.PaintSystem>();
         bonestojiggle = new List<WiggleBone>();
@@ -69,7 +71,7 @@ public class BrushWiggle : MonoBehaviour
             targetOffset.x = Mathf.Clamp(targetOffset.x, negativ_limit, positiv_limit);
             targetOffset.y = 0f; // disable Y wiggle
             targetOffset.z = Mathf.Clamp(targetOffset.z, negativ_limit, positiv_limit);
-            if (paintSystem.currentMovementSpeed >= paintSystem.movementThreshold || imuUdpLogger.aMag >= imuUdpLogger.fireAccelThreshold)
+            if (paintSystem.currentMovementSpeed >= paintSystem.movementThreshold || deviceAMag >= fireAccelThreshold)
             {
 
                 wb.eulerOffset = Vector3.Lerp(
@@ -83,12 +85,13 @@ public class BrushWiggle : MonoBehaviour
             }
             else
             {
+                // Smoothly reset to zero offset (no wiggle)
                 wb.eulerOffset = Vector3.Lerp(
                     wb.eulerOffset,
-                    wb.originalLocalEuler,
+                    Vector3.zero,
                     Time.deltaTime * wiggleSpeed
                 );
-                wb.T.localEulerAngles = wb.originalLocalEuler;
+                wb.T.localEulerAngles = wb.originalLocalEuler + wb.eulerOffset;
                 bonestojiggle[i] = wb;
             }
         }

@@ -517,7 +517,7 @@ MonoBehaviour:
   forwardBias: 0.6
   forwardDirection: {x: 0, y: 0, z: 1}
   spawnRate: 100000
-  lifeTime: 5
+  lifeTime: 30
   fadeOutDuration: 1
   spawnRadius: 0.015
   movementThreshold: 100

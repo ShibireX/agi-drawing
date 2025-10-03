@@ -273,9 +273,9 @@ public class ImuUdpLogger : MonoBehaviour
                     st.lastLogTime = now;
                     st.packetsSinceLastLog = 0;
 
-                    UnityEngine.Debug.Log(
+                    /*UnityEngine.Debug.Log(
                         $"[IMU d{st.deviceId}] seq={st.lastSeq} rate={st.hzSmoothed:F1} Hz " +
-                        $"q=({st.q.x:F2},{st.q.y:F2},{st.q.z:F2},{st.q.w:F2})");
+                        $"q=({st.q.x:F2},{st.q.y:F2},{st.q.z:F2},{st.q.w:F2})");*/
                 }
 
                 // Update rig transform + fire logic

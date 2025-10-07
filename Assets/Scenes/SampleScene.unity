@@ -231,14 +231,29 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5c8732def3957f74a95d0a4afa9703c9, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 5c8732def3957f74a95d0a4afa9703c9, type: 3}
       propertyPath: m_Name
       value: canvasMeshupdate
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 5c8732def3957f74a95d0a4afa9703c9, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7739928388064824102, guid: 5c8732def3957f74a95d0a4afa9703c9, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 5c8732def3957f74a95d0a4afa9703c9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 993002215}
   m_SourcePrefab: {fileID: 100100000, guid: 5c8732def3957f74a95d0a4afa9703c9, type: 3}
 --- !u!1 &705507993
 GameObject:
@@ -450,8 +465,8 @@ MonoBehaviour:
   maxPlayers: 4
   spawnLeft: {fileID: 0}
   spawnRight: {fileID: 0}
-  fallbackLeft: {x: -1, y: 0, z: -1}
-  fallbackRight: {x: 1, y: 0, z: -1}
+  fallbackLeft: {x: 0, y: 0, z: -1}
+  fallbackRight: {x: 0, y: 0, z: -1}
   projectilePrefab: {fileID: 0}
   launchSpeed: 6
   fireAccelThreshold: 2
@@ -470,12 +485,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d724352ae98a7473db6df8d3eb135b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spawnInterval: 3
-  spawnDistance: 60
-  cubeScale: {x: 10, y: 10, z: 10}
-  cubeLifetime: 10
-  cubePrefab: {fileID: 0}
-  _t: 0
+--- !u!1 &993002213 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 5c8732def3957f74a95d0a4afa9703c9, type: 3}
+  m_PrefabInstance: {fileID: 654433561}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &993002215
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 993002213}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f8a2b3c4d5e6f7a8b9c0d1e2f3a4b5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  canvasObject: {fileID: 993002213}
+  textureResolution: {x: 2048, y: 2048}
+  canvasBaseColor: {r: 1, g: 1, b: 1, a: 1}
+  paintRadius: 0.0041
+  blendAmount: 0.3
+  flipU: 0
+  flipV: 0
+  canvasPaintCS: {fileID: 7200000, guid: 7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d, type: 3}
+  canvasDimensions: {x: 1.75, y: 1, z: 0.05}
 --- !u!1 &1475877829
 GameObject:
   m_ObjectHideFlags: 0
@@ -526,10 +561,11 @@ MonoBehaviour:
   mesh: {fileID: -2432090755550338912, guid: 4dea3395154af394d9d388505a2bc367, type: 3}
   renderMat: {fileID: 2100000, guid: 8023c82a80376934aa948d37fe4f1906, type: 2}
   baseColor: {r: 1, g: 1, b: 1, a: 1}
+  canvasPainter: {fileID: 993002215}
   spawnPosition: {x: 0, y: 0, z: 0}
   spawnDirection: {x: 0, y: 0, z: 0}
   spawnColor: {x: 0, y: 0, z: 0}
-  emit: 0
+  emit: 1
 --- !u!114 &1475877831
 MonoBehaviour:
   m_ObjectHideFlags: 0

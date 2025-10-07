@@ -6,10 +6,18 @@ struct Particle {
     float4 color;    // rgb, w = alpha
 };
 
+struct CollisionData {
+    float3 position;  // world space position
+    float3 color;     // RGB color
+};
+
 RWStructuredBuffer<Particle> _Particles;
 RWStructuredBuffer<uint>     _SpawnedCount; // length = 1
+RWStructuredBuffer<CollisionData> _Collisions; // collision output buffer
+RWStructuredBuffer<uint>     _CollisionCount; // length = 1, atomic counter
 
 int   _ActiveCount;      // we will set this to particleCount from CPU
+int   _MaxCollisions;    // max collisions we can store per frame
 float _DeltaTime;
 float _Gravity;
 float _Damping;
@@ -28,6 +36,7 @@ float3 _SpawnPosition;
 float3 _SpawnDirection;
 float3 _SpawnColor;
 float3 _ForwardDirection; // preferred launch direction (towards canvas)
+float3 _CanvasCenter;     // world position of canvas center
 
 float3 _PrevSpawnPosition;
 float3 _PrevSpawnDirection;
@@ -172,20 +181,41 @@ void Integrate(uint3 tid : SV_DispatchThreadID)
     // air resistance (drag) - creates smoother, more natural arcs
     p.velocity.xyz *= (1.0f - _AirResistance * _DeltaTime);
 
-    const float3 dimensions = float3(0.7f, 0.4f, 0.02f) * 0.5f * 5.0f;
-    if (p.position.x > -dimensions.x && p.position.x < dimensions.x &&
-        p.position.y > -dimensions.y && p.position.y < dimensions.y &&
-        p.position.z > -dimensions.z && p.position.z < dimensions.z)
+    // integrate position
+    float3 newPos = p.position.xyz + p.velocity.xyz * _DeltaTime;
+    
+    // Check for canvas collision (canvas dimensions in world space)
+    // The canvas GameObject is at origin but rotated 270° around X
+    // This means the canvas surface (originally at Y=0) is now facing upward
+    // Particles are hitting at Y≈0.25 based on collision logs
+    const float3 dimensions = float3(1.75f, 1.0f, 0.05f); // half-extents
+    bool hitCanvas = (abs(newPos.x) < dimensions.x &&
+                      abs(newPos.y) < dimensions.y &&
+                      abs(newPos.z) < dimensions.z);
+    
+    if (hitCanvas)
     {
-        // Hit canvas, stop moving
-        p.velocity.x = 0;
-        p.velocity.y = 0;
-        p.velocity.z = 0;
-    }
+        // Record collision for canvas painting
+        uint collisionIndex;
+        InterlockedAdd(_CollisionCount[0], 1, collisionIndex);
         
-
-    // integrate
-    p.position.xyz += p.velocity.xyz * _DeltaTime;
+        if (collisionIndex < (uint)_MaxCollisions)
+        {
+            CollisionData collision;
+            collision.position = newPos;
+            collision.color = p.color.rgb;
+            _Collisions[collisionIndex] = collision;
+        }
+        
+        // Kill the particle immediately
+        p.velocity.w = -1;  // mark as dead
+        p.position.w = 0;   // invisible
+        _Particles[i] = p;
+        return;
+    }
+    
+    // Update position if no collision
+    p.position.xyz = newPos;
 
     // bounce AABB with damping
     //float3 half = _BoundsExtents;

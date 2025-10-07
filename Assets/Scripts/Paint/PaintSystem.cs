@@ -42,11 +42,20 @@ namespace Paint
         public Material renderMat;   // material using Unlit/InstancedParticles
         public Color baseColor = Color.white;
 
+        [Header("Canvas Painting")]
+        [Tooltip("CanvasPainter component for painting particles to canvas texture")]
+        public CanvasPainter canvasPainter;
+
         // refs
         Particles particlesOwner;
         ComputeBuffer argsBuffer;
         int kernelIntegrate;
         Bounds drawBounds;
+        
+        // Collision buffers for canvas painting
+        private ComputeBuffer collisionBuffer;
+        private ComputeBuffer collisionCountBuffer;
+        private int maxCollisionsPerFrame = 1000;
 
         // Multi-player spawn system
         public struct SpawnRequest
@@ -170,6 +179,13 @@ namespace Paint
             spawnCountBuffer = new ComputeBuffer(1, sizeof(uint), ComputeBufferType.Structured);
             simulationCS.SetBuffer(kernelIntegrate, "_SpawnedCount", spawnCountBuffer);
 
+            // Allocate collision buffers for canvas painting
+            collisionBuffer = new ComputeBuffer(maxCollisionsPerFrame, sizeof(float) * 6, ComputeBufferType.Structured);
+            collisionCountBuffer = new ComputeBuffer(1, sizeof(uint), ComputeBufferType.Structured);
+            simulationCS.SetBuffer(kernelIntegrate, "_Collisions", collisionBuffer);
+            simulationCS.SetBuffer(kernelIntegrate, "_CollisionCount", collisionCountBuffer);
+            simulationCS.SetInt("_MaxCollisions", maxCollisionsPerFrame);
+
             // set static-ish uniforms once
             simulationCS.SetFloat("_LifeTime", lifeTime);
             simulationCS.SetFloat("_SpawnRadius", spawnRadius);
@@ -181,6 +197,16 @@ namespace Paint
             // Optional: we�ll let compute scan all slots
             particlesOwner.activeCount = particlesOwner.particleCount;
             UpdateArgsBuffer();
+            
+            // Find CanvasPainter if not assigned
+            if (canvasPainter == null)
+            {
+                canvasPainter = FindObjectOfType<CanvasPainter>();
+                if (canvasPainter != null)
+                {
+                    Debug.Log("[PaintSystem] CanvasPainter found automatically.");
+                }
+            }
         }
 
         void OnDisable()
@@ -190,10 +216,20 @@ namespace Paint
 
             argsBuffer?.Dispose();
             argsBuffer = null;
+            
+            collisionBuffer?.Dispose();
+            collisionBuffer = null;
+            
+            collisionCountBuffer?.Dispose();
+            collisionCountBuffer = null;
         }
 
         void Update()
         {
+            // Clear collision count at start of frame
+            uint[] zeroCollisions = { 0u };
+            collisionCountBuffer.SetData(zeroCollisions);
+            
             // Set static uniforms
             simulationCS.SetFloats("_BoundsExtents", boundsExtents.x, boundsExtents.y, boundsExtents.z);
             simulationCS.SetFloat("_Gravity", gravity);
@@ -207,6 +243,20 @@ namespace Paint
             simulationCS.SetFloat("_SpreadAngle", spreadAngle);
             simulationCS.SetFloat("_ForwardBias", forwardBias);
             simulationCS.SetVector("_ForwardDirection", forwardDirection.normalized);
+            
+            // Set canvas center position for collision detection
+            // The canvas is rotated 270° around X, which moves the surface up
+            Vector3 canvasCenter = Vector3.zero;
+            if (canvasPainter != null && canvasPainter.canvasObject != null)
+            {
+                canvasCenter = canvasPainter.canvasObject.transform.position;
+                // Log canvas position periodically
+                if (Time.frameCount % 60 == 0)
+                {
+                    Debug.Log($"[PaintSystem] Canvas position: {canvasCenter}, rotation: {canvasPainter.canvasObject.transform.rotation.eulerAngles}");
+                }
+            }
+            simulationCS.SetVector("_CanvasCenter", canvasCenter);
 
             // Ensure bindings
             particlesOwner.Bind(simulationCS, kernelIntegrate, "_Particles");
@@ -295,6 +345,31 @@ namespace Paint
 
             // Clear spawn requests for next frame
             spawnRequests.Clear();
+            
+            // Process collisions for canvas painting
+            if (canvasPainter != null)
+            {
+                // Read collision count from GPU
+                uint[] collisionCount = new uint[1];
+                collisionCountBuffer.GetData(collisionCount);
+                int numCollisions = (int)collisionCount[0];
+                
+                if (numCollisions > 0)
+                {
+                    // Read collision data from GPU
+                    CanvasPainter.CollisionData[] collisions = new CanvasPainter.CollisionData[Mathf.Min(numCollisions, maxCollisionsPerFrame)];
+                    collisionBuffer.GetData(collisions, 0, 0, collisions.Length);
+                    
+                    Debug.Log($"[PaintSystem] {numCollisions} collisions detected this frame, processing {collisions.Length}");
+                    
+                    // Process collisions with CanvasPainter
+                    canvasPainter.ProcessCollisions(collisions, collisions.Length);
+                }
+            }
+            else if (Time.frameCount % 60 == 0) // Log every 60 frames if painter is missing
+            {
+                Debug.LogWarning("[PaintSystem] CanvasPainter is null! Canvas painting disabled.");
+            }
 
             // Draw all instances; dead ones have radius=0 so they vanish
             UpdateArgsBuffer();

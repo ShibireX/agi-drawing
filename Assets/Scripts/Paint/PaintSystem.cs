@@ -79,6 +79,7 @@ namespace Paint
         /// </summary>
         public void RequestSpawn(int playerId, Vector3 position, Vector3 direction, Vector3 color)
         {
+            Debug.Log("Spawn requested");
             // Get or initialize previous position/direction for this player
             if (!playerPrevPositions.ContainsKey(playerId))
             {

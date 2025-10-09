@@ -440,7 +440,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1562bb0b94a840d43b4eef535c1cddb9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  paintSystem: {fileID: 1475877830}
   listenPort: 26761
   logIntervalSeconds: 0.3
   showHud: 1
@@ -458,6 +457,7 @@ MonoBehaviour:
   fireCooldown: 0.2
   projectileLifetime: 8
   allowManualFire: 1
+  brushes_colour: []
 --- !u!114 &963194231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -470,98 +470,67 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d724352ae98a7473db6df8d3eb135b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spawnInterval: 3
-  spawnDistance: 60
-  cubeScale: {x: 10, y: 10, z: 10}
-  cubeLifetime: 10
-  cubePrefab: {fileID: 0}
-  _t: 0
---- !u!1 &1475877829
-GameObject:
+--- !u!1001 &7024356037056303895
+PrefabInstance:
   m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1475877832}
-  - component: {fileID: 1475877831}
-  - component: {fileID: 1475877830}
-  m_Layer: 0
-  m_Name: PaintSystem
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1475877830
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1475877829}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 964a113439f19d443816bc0645bca36e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  simulationCS: {fileID: 7200000, guid: 55dc8d692019e0a42b782b2c87f840f5, type: 3}
-  boundsExtents: {x: 25, y: 50, z: 25}
-  gravity: -5
-  damping: 0.05
-  airResistance: 0.3
-  threadGroupSizeX: 256
-  maxInitialSpeed: 8
-  spreadAngle: 0.4
-  forwardBias: 0.6
-  forwardDirection: {x: 0, y: 0, z: 1}
-  spawnRate: 100000
-  lifeTime: 30
-  fadeOutDuration: 1
-  spawnRadius: 0.015
-  movementThreshold: 100
-  debugMovement: 0
-  currentMovementSpeed: 0
-  mesh: {fileID: -2432090755550338912, guid: 4dea3395154af394d9d388505a2bc367, type: 3}
-  renderMat: {fileID: 2100000, guid: 8023c82a80376934aa948d37fe4f1906, type: 2}
-  baseColor: {r: 1, g: 1, b: 1, a: 1}
-  spawnPosition: {x: 0, y: 0, z: 0}
-  spawnDirection: {x: 0, y: 0, z: 0}
-  spawnColor: {x: 0, y: 0, z: 0}
-  emit: 0
---- !u!114 &1475877831
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1475877829}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c62adfd0807147d4bbb1eec61a6671fa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  particleCount: 125000
-  activeCount: 125000
-  defaultRadius: 0.005
-  initialVelocityRange: {x: 1, y: 1, z: 1}
-  initialColor: {r: 1, g: 1, b: 1, a: 1}
---- !u!4 &1475877832
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1475877829}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2574588476406562271, guid: 31a2fcd41c5b5354089be7892c4a6c81, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2574588476406562271, guid: 31a2fcd41c5b5354089be7892c4a6c81, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2574588476406562271, guid: 31a2fcd41c5b5354089be7892c4a6c81, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2574588476406562271, guid: 31a2fcd41c5b5354089be7892c4a6c81, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2574588476406562271, guid: 31a2fcd41c5b5354089be7892c4a6c81, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2574588476406562271, guid: 31a2fcd41c5b5354089be7892c4a6c81, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2574588476406562271, guid: 31a2fcd41c5b5354089be7892c4a6c81, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2574588476406562271, guid: 31a2fcd41c5b5354089be7892c4a6c81, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2574588476406562271, guid: 31a2fcd41c5b5354089be7892c4a6c81, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2574588476406562271, guid: 31a2fcd41c5b5354089be7892c4a6c81, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6942421559085155466, guid: 31a2fcd41c5b5354089be7892c4a6c81, type: 3}
+      propertyPath: m_Name
+      value: PaintSystem
+      objectReference: {fileID: 0}
+    - target: {fileID: 6942421559085155466, guid: 31a2fcd41c5b5354089be7892c4a6c81, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 31a2fcd41c5b5354089be7892c4a6c81, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -569,5 +538,5 @@ SceneRoots:
   - {fileID: 593734035}
   - {fileID: 705507995}
   - {fileID: 963194228}
-  - {fileID: 1475877832}
+  - {fileID: 7024356037056303895}
   - {fileID: 654433561}

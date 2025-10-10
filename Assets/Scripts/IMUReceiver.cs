@@ -25,6 +25,7 @@ public class ImuUdpLogger : MonoBehaviour
     Thread recvThread;
     volatile bool running;
 
+
     class DeviceState
     {
         public byte deviceId;
@@ -145,7 +146,8 @@ public class ImuUdpLogger : MonoBehaviour
 
                     Debug.Log(
                         $"[IMU d{st.deviceId}] seq={st.lastSeq} rate={st.hzSmoothed:F1} Hz " +
-                        $"q=({st.q.x:F2},{st.q.y:F2},{st.q.z:F2},{st.q.w:F2})"
+                        $"q=({st.q.x:F2},{st.q.y:F2},{st.q.z:F2},{st.q.w:F2})" +
+                        $"acc=({st.accel.x:F2},{st.accel.y:F2},{st.accel.z:F2})"
                     );
                 }
             }
@@ -155,13 +157,33 @@ public class ImuUdpLogger : MonoBehaviour
         if (referenceObject && control != null)
         {
             // Adjust axes: phone frame vs Unity frame might differ
-            // Try as-is first; if it looks wrong, experiment with rotation multipliers.
             Quaternion q = control.q;
             // q = new Quaternion(-q.x, -q.y, q.z, q.w); // Original
             q = new Quaternion(q.x, q.y, q.z, q.w); // Works on Sony Xperia 10 VI
 
             // Then apply your 90° rotation correction
             referenceObject.rotation = Quaternion.Euler(90, 0, 180) * q;
+
+            // CARTESIAN MOVEMENT
+            /*float accelerationScale = 25f;
+            Vector3 deviceAccel = new Vector3(control.accel.x, control.accel.y, control.accel.z);
+
+            // Keep only the dominant component
+            Vector3 maxAccel = Vector3.zero;
+            float absX = Mathf.Abs(deviceAccel.x);
+            float absY = Mathf.Abs(deviceAccel.y);
+            float absZ = Mathf.Abs(deviceAccel.z);
+
+            if (absX > absY && absX > absZ) maxAccel.x = deviceAccel.x;
+            else if (absY > absX && absY > absZ) maxAccel.y = deviceAccel.y;
+            else maxAccel.z = deviceAccel.z;
+
+            Vector3 current_velocity = previous velocity + maxAccel accel 
+
+            // Apply to brush movement
+            Vector3 worldVel = referenceObject.rotation * maxAccel * accelerationScale;
+            referenceObject.position += worldVel * Time.deltaTime;*/
+
         }
     }
 
@@ -177,8 +199,14 @@ public class ImuUdpLogger : MonoBehaviour
             {
                 var st = kv.Value;
                 if (!st.seen) continue;
+                //GUI.Label(new Rect(10, 10 + 20 * line++, 1400, 20),
+                  //  $"d{st.deviceId}  {st.hzSmoothed:F0} Hz  q=[{st.q.x:F2},{st.q.y:F2},{st.q.z:F2},{st.q.w:F2}]");
+
                 GUI.Label(new Rect(10, 10 + 20 * line++, 1400, 20),
-                    $"d{st.deviceId}  {st.hzSmoothed:F0} Hz  q=[{st.q.x:F2},{st.q.y:F2},{st.q.z:F2},{st.q.w:F2}]");
+                    $"d{st.deviceId}  {st.hzSmoothed:F0} Hz  q=[{st.q.x:F2},{st.q.y:F2},{st.q.z:F2},{st.q.w:F2}] " +
+                    $"acc=[{st.accel.x:F2},{st.accel.y:F2},{st.accel.z:F2}]"
+                );
+
             }
         }
     }

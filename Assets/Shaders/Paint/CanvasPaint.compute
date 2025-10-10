@@ -1,0 +1,108 @@
+#pragma kernel PaintToCanvas
+
+// Collision data from particle simulation
+struct CollisionData
+{
+    float3 position;  // NOW CONTAINS: (U, V, 0) - UV coordinates already calculated on CPU
+    float3 color;     // RGB color
+};
+
+RWTexture2D<float4> _CanvasTexture;
+StructuredBuffer<CollisionData> _Collisions;
+
+float _PaintRadius;       // Radius in UV space
+float _BlendAmount;       // How much to blend with existing color
+float3 _CanvasDimensions; // [UNUSED NOW] Canvas HALF-EXTENTS in local space (center to edge)
+int2 _TextureResolution;  // Texture size in pixels
+uint _CollisionCount;     // Number of valid collisions for this dispatch
+int _FlipU;               // 0 or 1 to flip U
+int _FlipV;               // 0 or 1 to flip V
+
+[numthreads(8, 1, 1)]
+void PaintToCanvas(uint3 id : SV_DispatchThreadID)
+{
+    // DIAGNOSTIC: Paint a pixel for thread 0 to verify shader runs
+    if (id.x == 0)
+    {
+        _CanvasTexture[int2(100, 100)] = float4(0, 1, 0, 1); // Green at (100,100)
+        _CanvasTexture[int2(100, 101)] = float4(0, 1, 0, 1);
+        _CanvasTexture[int2(101, 100)] = float4(0, 1, 0, 1);
+        _CanvasTexture[int2(101, 101)] = float4(0, 1, 0, 1);
+    }
+    
+    // Guard: thread id must be within provided collision count
+    if (id.x >= _CollisionCount)
+        return;
+
+    // Each thread processes one collision
+    CollisionData collision = _Collisions[id.x];
+    
+    // Position already contains UV coordinates (calculated on CPU)
+    float2 centerUV = collision.position.xy;
+    
+    // Apply optional flips
+    if (_FlipU != 0) centerUV.x = 1.0f - centerUV.x;
+    if (_FlipV != 0) centerUV.y = 1.0f - centerUV.y;
+    
+    // Skip if outside canvas bounds (already clamped, but double-check)
+    /*if (centerUV.x < 0 || centerUV.x > 1 || centerUV.y < 0 || centerUV.y > 1)
+    {
+        // For debugging - paint red at texture edges when out of bounds
+        if (id.x == 0) // Only first thread to avoid race conditions
+        {
+            if (centerUV.x < 0) _CanvasTexture[int2(0, _TextureResolution.y/2)] = float4(1, 0, 0, 1);
+            if (centerUV.x > 1) _CanvasTexture[int2(_TextureResolution.x-1, _TextureResolution.y/2)] = float4(1, 0, 0, 1);
+            if (centerUV.y < 0) _CanvasTexture[int2(_TextureResolution.x/2, 0)] = float4(1, 0, 0, 1);
+            if (centerUV.y > 1) _CanvasTexture[int2(_TextureResolution.x/2, _TextureResolution.y-1)] = float4(1, 0, 0, 1);
+        }
+        return;
+    }*/
+    
+    // Clamp UV to valid range instead of rejecting
+    centerUV = saturate(centerUV);
+    
+    // Convert UV to pixel coordinates and clamp to [0, res-1]
+    int2 centerPixel = int2(centerUV.x * _TextureResolution.x, centerUV.y * _TextureResolution.y);
+    centerPixel = clamp(centerPixel, int2(0, 0), _TextureResolution - int2(1, 1));
+    
+    // For debugging - always paint at least one pixel to confirm we're hitting valid UVs
+    _CanvasTexture[centerPixel] = float4(collision.color, 1.0f);
+    
+    // Calculate paint radius in pixels
+    int radiusPixels = max(1, (int)(_PaintRadius * _TextureResolution.x));
+    
+    // Paint a circular splat around the collision point
+    for (int y = -radiusPixels; y <= radiusPixels; y++)
+    {
+        for (int x = -radiusPixels; x <= radiusPixels; x++)
+        {
+            int2 pixel = centerPixel + int2(x, y);
+            
+            // Skip if out of texture bounds
+            if (pixel.x < 0 || pixel.x >= _TextureResolution.x || 
+                pixel.y < 0 || pixel.y >= _TextureResolution.y)
+                continue;
+            
+            // Calculate distance from center
+            float dist = length(float2(x, y)) / float(radiusPixels);
+            
+            // Skip if outside circle
+            if (dist > 1.0f)
+                continue;
+            
+            // Smooth falloff (soft edges)
+            float falloff = 1.0f - smoothstep(0.0f, 1.0f, dist);
+            
+            // Get existing color
+            float4 existingColor = _CanvasTexture[pixel];
+            
+            // Blend new paint color with existing
+            float3 newColor = collision.color;
+            float3 blendedColor = lerp(existingColor.rgb, newColor, _BlendAmount * falloff);
+            
+            // Write back to texture
+            _CanvasTexture[pixel] = float4(blendedColor, 1.0f);
+        }
+    }
+}
+

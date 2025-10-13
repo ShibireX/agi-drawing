@@ -6,12 +6,12 @@ namespace Paint
     [RequireComponent(typeof(Particles))]
     public sealed class PaintSystem : MonoBehaviour
     {
-        
+
 
         [Header("Simulation")]
         public ComputeShader simulationCS;
         public Vector3 boundsExtents = new Vector3(25, 25, 25);
-        
+
         public float gravity = -9.81f;
         public float damping = 0.98f;
         [Range(0f, 1f)] public float airResistance = 0.3f;  // slows particles over time for smoother arcs
@@ -51,7 +51,7 @@ namespace Paint
         ComputeBuffer argsBuffer;
         int kernelIntegrate;
         Bounds drawBounds;
-        
+
         // Collision buffers for canvas painting
         private ComputeBuffer collisionBuffer;
         private ComputeBuffer collisionCountBuffer;
@@ -68,7 +68,7 @@ namespace Paint
         }
 
         private List<SpawnRequest> spawnRequests = new List<SpawnRequest>();
-        
+
         // Legacy single-player support (for compatibility)
         public Vector3 spawnPosition;
         public Vector3 spawnDirection;
@@ -197,7 +197,7 @@ namespace Paint
             // Optional: we�ll let compute scan all slots
             particlesOwner.activeCount = particlesOwner.particleCount;
             UpdateArgsBuffer();
-            
+
             // Find CanvasPainter if not assigned
             if (canvasPainter == null)
             {
@@ -216,10 +216,10 @@ namespace Paint
 
             argsBuffer?.Dispose();
             argsBuffer = null;
-            
+
             collisionBuffer?.Dispose();
             collisionBuffer = null;
-            
+
             collisionCountBuffer?.Dispose();
             collisionCountBuffer = null;
         }
@@ -229,7 +229,7 @@ namespace Paint
             // Clear collision count at start of frame
             uint[] zeroCollisions = { 0u };
             collisionCountBuffer.SetData(zeroCollisions);
-            
+
             // Set static uniforms
             simulationCS.SetFloats("_BoundsExtents", boundsExtents.x, boundsExtents.y, boundsExtents.z);
             simulationCS.SetFloat("_Gravity", gravity);
@@ -243,7 +243,7 @@ namespace Paint
             simulationCS.SetFloat("_SpreadAngle", spreadAngle);
             simulationCS.SetFloat("_ForwardBias", forwardBias);
             simulationCS.SetVector("_ForwardDirection", forwardDirection.normalized);
-            
+
             // Set canvas center position for collision detection
             // The canvas is rotated 270° around X, which moves the surface up
             Vector3 canvasCenter = Vector3.zero;
@@ -302,7 +302,7 @@ namespace Paint
             {
                 // Divide spawn budget among all active players
                 float budgetPerPlayer = (spawnRate * Time.deltaTime + spawnCarry) / spawnRequests.Count;
-                
+
                 foreach (var request in spawnRequests)
                 {
                     int budget = Mathf.FloorToInt(budgetPerPlayer);
@@ -335,17 +335,17 @@ namespace Paint
                 // No spawn requests - still need to update existing particles (aging, physics)
                 simulationCS.SetInt("_EmitEnabled", 0);
                 simulationCS.SetInt("_SpawnBudget", 0);
-                
+
                 uint[] zero = { 0u };
                 spawnCountBuffer.SetData(zero);
-                
+
                 uint groups = (uint)((particlesOwner.particleCount + threadGroupSizeX - 1) / threadGroupSizeX);
                 if (groups > 0) simulationCS.Dispatch(kernelIntegrate, (int)groups, 1, 1);
             }
 
             // Clear spawn requests for next frame
             spawnRequests.Clear();
-            
+
             // Process collisions for canvas painting
             if (canvasPainter != null)
             {
@@ -353,15 +353,15 @@ namespace Paint
                 uint[] collisionCount = new uint[1];
                 collisionCountBuffer.GetData(collisionCount);
                 int numCollisions = (int)collisionCount[0];
-                
+
                 if (numCollisions > 0)
                 {
                     // Read collision data from GPU
                     CanvasPainter.CollisionData[] collisions = new CanvasPainter.CollisionData[Mathf.Min(numCollisions, maxCollisionsPerFrame)];
                     collisionBuffer.GetData(collisions, 0, 0, collisions.Length);
-                    
+
                     Debug.Log($"[PaintSystem] {numCollisions} collisions detected this frame, processing {collisions.Length}");
-                    
+
                     // Process collisions with CanvasPainter
                     canvasPainter.ProcessCollisions(collisions, collisions.Length);
                 }

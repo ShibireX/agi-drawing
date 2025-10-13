@@ -463,12 +463,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1562bb0b94a840d43b4eef535c1cddb9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  paintSystem: {fileID: 1475877830}
   listenPort: 26761
   logIntervalSeconds: 0.3
   showHud: 1
   aMag: 0
-  playerRigPrefab: {fileID: 4971225736180885182, guid: cd583df9b50381c47a757aebf51cfa92, type: 3}
+  playerRigPrefab: {fileID: 4971225736180885182, guid: c7981a6152639e448b45909150ef8182, type: 3}
   despawnAfterSeconds: 15
   maxPlayers: 4
   spawnLeft: {fileID: 0}
@@ -481,6 +480,7 @@ MonoBehaviour:
   fireCooldown: 0.2
   projectileLifetime: 8
   allowManualFire: 1
+  brushes_colour: []
 --- !u!114 &963194231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -524,93 +524,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 5c8732def3957f74a95d0a4afa9703c9, type: 3}
   m_PrefabInstance: {fileID: 654433561}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1475877829
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1475877832}
-  - component: {fileID: 1475877831}
-  - component: {fileID: 1475877830}
-  m_Layer: 0
-  m_Name: PaintSystem
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1475877830
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1475877829}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 964a113439f19d443816bc0645bca36e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  simulationCS: {fileID: 7200000, guid: 55dc8d692019e0a42b782b2c87f840f5, type: 3}
-  boundsExtents: {x: 25, y: 50, z: 25}
-  gravity: -5
-  damping: 0.05
-  airResistance: 0.3
-  threadGroupSizeX: 256
-  maxInitialSpeed: 8
-  spreadAngle: 0.4
-  forwardBias: 0.6
-  forwardDirection: {x: 0, y: 0, z: 1}
-  spawnRate: 100000
-  lifeTime: 30
-  fadeOutDuration: 1
-  spawnRadius: 0.015
-  movementThreshold: 100
-  debugMovement: 0
-  currentMovementSpeed: 0
-  mesh: {fileID: -2432090755550338912, guid: 4dea3395154af394d9d388505a2bc367, type: 3}
-  renderMat: {fileID: 2100000, guid: 8023c82a80376934aa948d37fe4f1906, type: 2}
-  baseColor: {r: 1, g: 1, b: 1, a: 1}
-  canvasPainter: {fileID: 993002215}
-  spawnPosition: {x: 0, y: 0, z: 0}
-  spawnDirection: {x: 0, y: 0, z: 0}
-  spawnColor: {x: 0, y: 0, z: 0}
-  emit: 1
---- !u!114 &1475877831
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1475877829}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c62adfd0807147d4bbb1eec61a6671fa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  particleCount: 125000
-  activeCount: 125000
-  defaultRadius: 0.005
-  initialVelocityRange: {x: 1, y: 1, z: 1}
-  initialColor: {r: 1, g: 1, b: 1, a: 1}
---- !u!4 &1475877832
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1475877829}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1921072253
 GameObject:
   m_ObjectHideFlags: 0
@@ -723,5 +636,4 @@ SceneRoots:
   - {fileID: 593734035}
   - {fileID: 705507995}
   - {fileID: 963194228}
-  - {fileID: 1475877832}
   - {fileID: 654433561}

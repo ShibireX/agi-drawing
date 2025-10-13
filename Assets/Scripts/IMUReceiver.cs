@@ -8,8 +8,8 @@ using UnityEngine;
 
 public class ImuUdpLogger : MonoBehaviour
 {
-    [Header("Paint")]
-    public Paint.PaintSystem paintSystem;
+    //[Header("Paint")]
+    //public Paint.PaintSystem paintSystem;
 
     [Header("Network")]
     public int listenPort = 26761;
@@ -52,6 +52,11 @@ public class ImuUdpLogger : MonoBehaviour
     public float projectileLifetime = 8f;
     [Tooltip("Also allow manual fire with space key (fires all rigs; ignores threshold).")]
     public bool allowManualFire = true;
+
+    [Header("Brush Colours (runtime)")]
+    [Tooltip("Current colour of each brush/player (updated automatically).")]
+    public Color[] brushes_colour;
+
 
     // Networking
     UdpClient udp;
@@ -125,7 +130,9 @@ public class ImuUdpLogger : MonoBehaviour
     {
                     
         UnityEngine.Debug.Log("script start");
-                    
+
+        brushes_colour = new Color[maxPlayers];
+
         try
         {
             sw = Stopwatch.StartNew();
@@ -241,6 +248,15 @@ public class ImuUdpLogger : MonoBehaviour
    
                     // Initialize rig tip color from device state
                     newRig.tipColor = (Color)st.color32;
+
+                    // Update brushes_colour array -----------
+                    int slot_brush = spawnOrder.IndexOf(kv.Key);
+                    if (slot_brush >= 0 && slot_brush < brushes_colour.Length)
+                    {
+                        brushes_colour[slot_brush] = newRig.tipColor;
+                    }
+                    // ---------------------------------------
+
                     // Apply immediately to its renderer
                     var rend = newRig.root ? newRig.root.GetComponentInChildren<Renderer>() : null;
                     if (rend != null)
@@ -273,9 +289,9 @@ public class ImuUdpLogger : MonoBehaviour
                     st.lastLogTime = now;
                     st.packetsSinceLastLog = 0;
 
-                    UnityEngine.Debug.Log(
+                    /*UnityEngine.Debug.Log(
                         $"[IMU d{st.deviceId}] seq={st.lastSeq} rate={st.hzSmoothed:F1} Hz " +
-                        $"q=({st.q.x:F2},{st.q.y:F2},{st.q.z:F2},{st.q.w:F2})");
+                        $"q=({st.q.x:F2},{st.q.y:F2},{st.q.z:F2},{st.q.w:F2})");*/
                 }
 
                 // Update rig transform + fire logic
@@ -303,6 +319,15 @@ public class ImuUdpLogger : MonoBehaviour
                         if (rig.tipColor != newColor)
                         {
                             rig.tipColor = newColor;
+
+                            // update brushes colour --------------------
+                            int slot_brush2 = spawnOrder.IndexOf(kv.Key);
+                            if (slot_brush2 >= 0 && slot_brush2 < brushes_colour.Length)
+                            {
+                                brushes_colour[slot_brush2] = newColor;
+                            }
+                            // --------------------------------------
+
                             var rr = rig.root ? rig.root.GetComponentInChildren<Renderer>() : null;
                             if (rr != null)
                             {
@@ -332,12 +357,12 @@ public class ImuUdpLogger : MonoBehaviour
                     bool manual = allowManualFire && Input.GetKeyDown(KeyCode.Space);
                     if (((manual || aMag >= fireAccelThreshold) && (now - rig.lastFireTime) >= fireCooldown) || false)
                     {
-                        FireProjectiles(
+                        /*FireProjectiles(
                             playerId: kv.Key,
                             origin: rig.tip ? rig.tip.position : (rig.reference ? rig.reference.position : Vector3.zero),
                             direction: accelWorld,
                             tipColor: rig.tipColor
-                        );
+                        );*/
                         rig.lastFireTime = now;
                     }
                 }
@@ -461,7 +486,7 @@ public class ImuUdpLogger : MonoBehaviour
         return rig;
     }
     
-    void FireProjectiles(int playerId, Vector3 origin, Vector3 direction, Color tipColor)
+    /*void FireProjectiles(int playerId, Vector3 origin, Vector3 direction, Color tipColor)
     {
         if (paintSystem == null) return;
         
@@ -472,7 +497,7 @@ public class ImuUdpLogger : MonoBehaviour
             direction: direction.normalized,
             color: new Vector3(tipColor.r, tipColor.g, tipColor.b)
         );
-    }
+    }*/
 
     void OnGUI()
     {

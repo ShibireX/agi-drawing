@@ -9,12 +9,13 @@ using UnityEngine;
 public class BrushWiggle : MonoBehaviour
 {
 
-    [SerializeField] public Paint.PaintSystem paintSystem;
+    [SerializeField]
+    public SparkleScript SparkleSystem;
 
     // Per-instance acceleration magnitude (set by IMUReceiver for each device)
     [HideInInspector]
     public float deviceAMag = 0f;
-    
+
     [HideInInspector]
     public float fireAccelThreshold = 2.0f;
 
@@ -27,6 +28,7 @@ public class BrushWiggle : MonoBehaviour
     public float MaxAngle = 15f;
     //minskar mängden desto mer  
     public float AngleReduction = 5f;
+    private Vector3 lastPosition;             
 
     public struct WiggleBone
     {
@@ -37,8 +39,8 @@ public class BrushWiggle : MonoBehaviour
 
     void Start()
     {
-        if (paintSystem == null)
-            paintSystem = FindObjectOfType<Paint.PaintSystem>();
+        lastPosition = transform.position;
+
         bonestojiggle = new List<WiggleBone>();
         // statiskt ben så skippar första, antar att den finns i listan. inkludera alla ben 
         for (int i = 1; i < bones.Length; i++)
@@ -51,13 +53,10 @@ public class BrushWiggle : MonoBehaviour
         }
     }
 
-
     public void ApplyWiggle()
     {
         Vector3 brushEuler = brushroot.localEulerAngles;
         brushEuler = NormalizeEuler(brushEuler);
-
-
         for (int i = 0; i < bonestojiggle.Count; i++)
         {
 
@@ -71,7 +70,9 @@ public class BrushWiggle : MonoBehaviour
             targetOffset.x = Mathf.Clamp(targetOffset.x, negativ_limit, positiv_limit);
             targetOffset.y = 0f; // disable Y wiggle
             targetOffset.z = Mathf.Clamp(targetOffset.z, negativ_limit, positiv_limit);
-            if (paintSystem.currentMovementSpeed >= paintSystem.movementThreshold || deviceAMag >= fireAccelThreshold)
+            Vector3 velocity = (transform.position - lastPosition) / Time.deltaTime;
+            float currentVel = velocity.magnitude;
+            if (currentVel >= SparkleSystem.velocityThreshold )
             {
 
                 wb.eulerOffset = Vector3.Lerp(
@@ -100,7 +101,6 @@ public class BrushWiggle : MonoBehaviour
 
     void LateUpdate()
     {
-
         ApplyWiggle();
     }
 

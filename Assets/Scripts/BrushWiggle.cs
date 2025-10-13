@@ -9,8 +9,6 @@ using UnityEngine;
 public class BrushWiggle : MonoBehaviour
 {
 
-    [SerializeField]
-    public SparkleScript SparkleSystem;
 
     // Per-instance acceleration magnitude (set by IMUReceiver for each device)
     [HideInInspector]
@@ -21,6 +19,7 @@ public class BrushWiggle : MonoBehaviour
 
     public Transform[] bones;
     [SerializeField] public Transform brushroot;
+    [SerializeField] public SparkleScript sparkleScript;
 
     [Range(0f, 20f)] public float wiggleSpeed = 5f;
     private List<WiggleBone> bonestojiggle;
@@ -72,7 +71,7 @@ public class BrushWiggle : MonoBehaviour
             targetOffset.z = Mathf.Clamp(targetOffset.z, negativ_limit, positiv_limit);
             Vector3 velocity = (transform.position - lastPosition) / Time.deltaTime;
             float currentVel = velocity.magnitude;
-            if (currentVel >= SparkleSystem.velocityThreshold )
+            if (currentVel >= sparkleScript.velocityThreshold )
             {
 
                 wb.eulerOffset = Vector3.Lerp(

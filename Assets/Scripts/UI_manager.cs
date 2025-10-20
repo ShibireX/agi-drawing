@@ -2,6 +2,8 @@ using System.Collections;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System.Collections.Generic;
+
 
 public class UI_manager : MonoBehaviour
 {
@@ -10,6 +12,8 @@ public class UI_manager : MonoBehaviour
     [SerializeField] private Sprite pauseSprite;
     [SerializeField] private Sprite playSprite;
     [SerializeField] private GameObject buttonPlay;
+    [SerializeField] private List<Image> galleryImages; 
+    private int currentGalleryIndex = 0;
 
     [SerializeField] private Image sandTimerUp;
     [SerializeField] private Image sandTimerDown;
@@ -168,7 +172,9 @@ public class UI_manager : MonoBehaviour
         text_321.transform.localScale = new Vector3(0.6f, 0.6f, 0.6f);
         text_321.gameObject.SetActive(false);
 
-        canvasPainter.ClearCanvas();
+        TakeScreenshot();
+
+        //canvasPainter.ClearCanvas();
     }
 
 
@@ -184,4 +190,55 @@ public class UI_manager : MonoBehaviour
         sandTimerUp.fillAmount = 1f;
         sandTimerDown.fillAmount = 0f;
     }
-}
+
+    private void TakeScreenshot()
+    {
+        StartCoroutine(CaptureAndShowScreenshot());
+    }
+
+    private IEnumerator CaptureAndShowScreenshot()
+    {
+        yield return new WaitForEndOfFrame();
+
+        // save screenshot as a textrue
+        Texture2D fullTex = ScreenCapture.CaptureScreenshotAsTexture();
+
+        int width = fullTex.width;
+        int height = fullTex.height;
+
+        // parameters to crop current screenshot
+        int cropX = Mathf.RoundToInt(width * 0.2f);
+        int cropY = Mathf.RoundToInt(height * 0.2f);
+        int cropWidth = Mathf.RoundToInt(width * 0.6f);
+        int cropHeight = Mathf.RoundToInt(height * 0.6f);
+
+        // crop
+        Color[] pixels = fullTex.GetPixels(cropX, cropY, cropWidth, cropHeight);
+        Texture2D croppedTex = new Texture2D(cropWidth, cropHeight, TextureFormat.RGB24, false);
+        croppedTex.SetPixels(pixels);
+        croppedTex.Apply();
+
+        // create a Sprite from the cropped texture
+        Sprite screenshotSprite = Sprite.Create(
+            croppedTex,
+            new Rect(0, 0, cropWidth, cropHeight),
+            new Vector2(0.5f, 0.5f)
+        );
+
+        // update the gallery image
+        if (galleryImages != null && galleryImages.Count > 0)
+        {
+            Image targetImage = galleryImages[currentGalleryIndex];
+            targetImage.sprite = screenshotSprite;
+            //targetImage.preserveAspect = true;
+
+            currentGalleryIndex = (currentGalleryIndex + 1) % galleryImages.Count;
+        }
+
+        // Cleanup memory
+        Destroy(fullTex);
+
+        canvasPainter.ClearCanvas();
+    }
+
+ }

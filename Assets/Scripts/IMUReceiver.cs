@@ -518,6 +518,34 @@ public class ImuUdpLogger : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Temporarily hide all brush GameObjects (for screenshots)
+    /// </summary>
+    public void HideAllBrushes()
+    {
+        foreach (var rig in rigs.Values)
+        {
+            if (rig.root != null)
+            {
+                rig.root.SetActive(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Show all brush GameObjects after hiding
+    /// </summary>
+    public void ShowAllBrushes()
+    {
+        foreach (var rig in rigs.Values)
+        {
+            if (rig.root != null)
+            {
+                rig.root.SetActive(true);
+            }
+        }
+    }
+
     void OnDestroy()
     {
         running = false;

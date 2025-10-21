@@ -2464,6 +2464,7 @@ MonoBehaviour:
   sandTimerUp: {fileID: 64651609}
   sandTimerDown: {fileID: 328595555}
   canvasPainter: {fileID: 993002215}
+  imuUdpLogger: {fileID: 963194230}
   totalTime: 5
 --- !u!222 &6642621724155528433
 CanvasRenderer:

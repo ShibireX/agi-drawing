@@ -18,6 +18,7 @@ public class UI_manager : MonoBehaviour
     [SerializeField] private Image sandTimerUp;
     [SerializeField] private Image sandTimerDown;
     [SerializeField] private Paint.CanvasPainter canvasPainter;
+    [SerializeField] private ImuUdpLogger imuUdpLogger;
 
     public int totalTime = 10; // seconds
     private int currentTime;
@@ -198,34 +199,41 @@ public class UI_manager : MonoBehaviour
 
     private IEnumerator CaptureAndShowScreenshot()
     {
+        // Hide all brushes temporarily
+        if (imuUdpLogger != null)
+        {
+            imuUdpLogger.HideAllBrushes();
+        }
+
+        // Wait for end of frame to ensure rendering is complete
         yield return new WaitForEndOfFrame();
 
-        // save screenshot as a textrue
+        // Take a screenshot of the screen (now without brushes visible)
         Texture2D fullTex = ScreenCapture.CaptureScreenshotAsTexture();
 
         int width = fullTex.width;
         int height = fullTex.height;
 
-        // parameters to crop current screenshot
+        // Parameters to crop to canvas area
         int cropX = Mathf.RoundToInt(width * 0.2f);
         int cropY = Mathf.RoundToInt(height * 0.2f);
         int cropWidth = Mathf.RoundToInt(width * 0.6f);
         int cropHeight = Mathf.RoundToInt(height * 0.6f);
 
-        // crop
+        // Crop the screenshot to canvas area
         Color[] pixels = fullTex.GetPixels(cropX, cropY, cropWidth, cropHeight);
         Texture2D croppedTex = new Texture2D(cropWidth, cropHeight, TextureFormat.RGB24, false);
         croppedTex.SetPixels(pixels);
         croppedTex.Apply();
 
-        // create a Sprite from the cropped texture
+        // Create a Sprite from the cropped texture
         Sprite screenshotSprite = Sprite.Create(
             croppedTex,
             new Rect(0, 0, cropWidth, cropHeight),
             new Vector2(0.5f, 0.5f)
         );
 
-        // update the gallery image
+        // Update the gallery image
         if (galleryImages != null && galleryImages.Count > 0)
         {
             Image targetImage = galleryImages[currentGalleryIndex];
@@ -237,6 +245,12 @@ public class UI_manager : MonoBehaviour
 
         // Cleanup memory
         Destroy(fullTex);
+
+        // Show brushes again
+        if (imuUdpLogger != null)
+        {
+            imuUdpLogger.ShowAllBrushes();
+        }
 
         canvasPainter.ClearCanvas();
     }

@@ -22,7 +22,8 @@ public class PaintSparkleManager : MonoBehaviour
     public Transform brushTip;
 
     private int playerID = 0;
-    private ImuUdpLogger imu_receiver; 
+    private ImuUdpLogger imu_receiver;
+    private Color lastBrushColor; 
 
     void Start()
     {
@@ -42,10 +43,51 @@ public class PaintSparkleManager : MonoBehaviour
         {
             Debug.LogWarning("IMUReceiver not found on MainCamera! Please add the IMUReceiver script to your MainCamera.");
         }
+
+        // Initialize last brush color
+        if (imu_receiver != null && playerID < imu_receiver.brushes_colour.Length)
+        {
+            lastBrushColor = imu_receiver.brushes_colour[playerID];
+        }
+
+        // Stop all child particle systems on start to prevent auto-play
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            ParticleSystem ps = transform.GetChild(i).GetComponent<ParticleSystem>();
+            if (ps != null)
+            {
+                ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
+        }
     }
 
     void Update()
     {
+        // Check for brush color change
+        if (imu_receiver != null && playerID < imu_receiver.brushes_colour.Length)
+        {
+            Color currentBrushColor = imu_receiver.brushes_colour[playerID];
+            
+            // If color changed, play BasicHit effect once (index 1, after Stars at index 0)
+            if (currentBrushColor != lastBrushColor)
+            {
+                Debug.Log($"Brush color changed from {lastBrushColor} to {currentBrushColor}");
+                lastBrushColor = currentBrushColor;
+                
+                // Play the second child particle system (BasicHit at index 1)
+                if (transform.childCount > 1)
+                {
+                    ParticleSystem ps = transform.GetChild(2).GetComponent<ParticleSystem>();
+                    if (ps != null)
+                    {
+                        ApplyColorToParticleSystem(ps, currentBrushColor, true);
+                        ps.Play();
+                        Debug.Log($"Playing {ps.name} effect for color change");
+                    }
+                }
+            }
+        }
+
         // Calculate velocity magnitude
         Vector3 velocity = (transform.position - lastPosition) / Time.deltaTime;
         float currentVel = velocity.magnitude;
@@ -72,13 +114,22 @@ public class PaintSparkleManager : MonoBehaviour
                 currentSparkle = 0;
             }
 
-            // Play particle system at child index = currentSparkle
-            Debug.Log("current sparkle: " + currentSparkle);
             if (transform.childCount > currentSparkle)
             {
                 ParticleSystem ps = transform.GetChild(currentSparkle).GetComponent<ParticleSystem>();
                 if (ps != null)
                 {
+                    // Apply brush color to the sparkle effect
+                    if (imu_receiver != null && playerID < imu_receiver.brushes_colour.Length)
+                    {
+                        Color brushColor = imu_receiver.brushes_colour[playerID];
+                        ApplyColorToParticleSystem(ps, brushColor, true);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"Cannot apply color - imu_receiver: {imu_receiver != null}, playerID: {playerID}");
+                    }
+                    
                     ps.Play();
                 }
             }
@@ -116,5 +167,79 @@ public class PaintSparkleManager : MonoBehaviour
             direction: direction.normalized,
             color: new Vector3(tipColor.r, tipColor.g, tipColor.b)
         );
+    }
+
+    void ApplyColorToParticleSystem(ParticleSystem ps, Color brushColor, bool includeChildren = true)
+    {
+        if (ps == null) return;
+        
+        // Only stop at the root level (not for each child individually)
+        if (includeChildren)
+        {
+            // Stop and clear the parent particle system (this stops all children too)
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+        
+        // Set the start color
+        var main = ps.main;
+        main.startColor = new ParticleSystem.MinMaxGradient(brushColor);
+        
+        // Also update Color over Lifetime if it's enabled
+        var colorOverLifetime = ps.colorOverLifetime;
+        if (colorOverLifetime.enabled)
+        {
+            // Preserve the existing alpha gradient but apply our color
+            var existingGradient = colorOverLifetime.color;
+            if (existingGradient.mode == ParticleSystemGradientMode.Gradient)
+            {
+                Gradient newGradient = new Gradient();
+                Gradient oldGradient = existingGradient.gradient;
+                
+                // Keep the same alpha keys, but replace colors with brush color
+                GradientColorKey[] colorKeys = new GradientColorKey[oldGradient.colorKeys.Length];
+                for (int i = 0; i < colorKeys.Length; i++)
+                {
+                    colorKeys[i] = new GradientColorKey(brushColor, oldGradient.colorKeys[i].time);
+                }
+                
+                newGradient.SetKeys(colorKeys, oldGradient.alphaKeys);
+                colorOverLifetime.color = new ParticleSystem.MinMaxGradient(newGradient);
+            }
+            else
+            {
+                // If it's a simple color, just set it
+                colorOverLifetime.color = new ParticleSystem.MinMaxGradient(brushColor);
+            }
+        }
+        
+        // Try to apply color to the material as well (for shaders that use material color)
+        var renderer = ps.GetComponent<ParticleSystemRenderer>();
+        if (renderer != null && renderer.sharedMaterial != null)
+        {
+            // Create a material instance to avoid changing the shared material
+            Material mat = renderer.material; // This creates an instance
+            
+            if (mat.HasProperty("_TintColor"))
+            {
+                mat.SetColor("_TintColor", brushColor);
+            }
+            if (mat.HasProperty("_Color"))
+            {
+                mat.SetColor("_Color", brushColor);
+            }
+        }
+
+        // Recursively apply to all child particle systems (without stopping them)
+        if (includeChildren)
+        {
+            ParticleSystem[] childSystems = ps.GetComponentsInChildren<ParticleSystem>(true);
+            foreach (ParticleSystem childPs in childSystems)
+            {
+                if (childPs != ps) // Don't re-apply to self
+                {
+                    ApplyColorToParticleSystem(childPs, brushColor, false); // false = don't stop children individually
+                }
+            }
+        }
     }
 }

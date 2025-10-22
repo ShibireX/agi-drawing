@@ -360,7 +360,7 @@ namespace Paint
                     CanvasPainter.CollisionData[] collisions = new CanvasPainter.CollisionData[Mathf.Min(numCollisions, maxCollisionsPerFrame)];
                     collisionBuffer.GetData(collisions, 0, 0, collisions.Length);
 
-                   // Debug.Log($"[PaintSystem] {numCollisions} collisions detected this frame, processing {collisions.Length}");
+                    Debug.Log($"[PaintSystem] {numCollisions} collisions detected this frame, processing {collisions.Length}");
 
                     // Process collisions with CanvasPainter
                     canvasPainter.ProcessCollisions(collisions, collisions.Length);

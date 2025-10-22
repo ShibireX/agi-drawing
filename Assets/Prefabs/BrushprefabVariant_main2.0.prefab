@@ -5091,7 +5091,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cb2e0eaeb2bd344b85480ce03be2115, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sparkleThreshold: 120
+  sparkleThreshold: 20
   maxConsecutiveSparkles: 5
   sparkleCooldown: 0.5
   velociyThreshold: 10
@@ -30030,14 +30030,14 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4971225736180885182}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 348133cc6829d4a449de87c618764ecd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  paintSystem: {fileID: 0}
   deviceAMag: 0
   fireAccelThreshold: 2
-  rotationThreshold: 1
   bones:
   - {fileID: 481604000391959419}
   - {fileID: 6031078040570440169}

@@ -20,14 +20,25 @@ public class UI_manager : MonoBehaviour
     [SerializeField] private Paint.CanvasPainter canvasPainter;
     [SerializeField] private ImuUdpLogger imuUdpLogger;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource countdownAudioSource;
+    [SerializeField] private AudioSource backgroundMusicAudioSource;
+    [SerializeField] private AudioSource whistleAudioSource;
+
     public int totalTime = 10; // seconds
     private int currentTime;
-    private bool isTimerRunning = false;
+    public bool isTimerRunning = false;
     private Coroutine timerCoroutine;
     private float sandStep; 
 
     private void Start()
     {
+        // Activate Display 2 if available
+        if (Display.displays.Length > 1)
+        {
+            Display.displays[1].Activate();
+        }
+
         UpdateTimerText(totalTime);
         currentTime = totalTime;
         text_321.gameObject.SetActive(false);
@@ -61,17 +72,36 @@ public class UI_manager : MonoBehaviour
             buttonPlay.GetComponent<Image>().sprite = pauseSprite;
             timerCoroutine = StartCoroutine(TimerCountdown());
             isTimerRunning = true;
+
+            // Resume background music
+            if (backgroundMusicAudioSource != null && !backgroundMusicAudioSource.isPlaying)
+            {
+                backgroundMusicAudioSource.UnPause();
+            }
         }
     }
 
     private IEnumerator StartCountdownSequence()
     {
+        // Play countdown audio
+        if (countdownAudioSource != null && countdownAudioSource.clip != null)
+        {
+            countdownAudioSource.Play();
+        }
+
         text_321.gameObject.SetActive(true);
         string[] countdownTexts = { "3", "2", "1", "Go!" };
 
         foreach (string count in countdownTexts)
         {
             text_321.text = count;
+            
+            // Play whistle when "Go!" appears
+            if (count == "Go!" && whistleAudioSource != null && whistleAudioSource.clip != null)
+            {
+                whistleAudioSource.Play();
+            }
+            
             yield return StartCoroutine(AnimateCountdownText());
         }
 
@@ -81,6 +111,13 @@ public class UI_manager : MonoBehaviour
         buttonPlay.GetComponent<Image>().sprite = pauseSprite;
         timerCoroutine = StartCoroutine(TimerCountdown());
         isTimerRunning = true;
+
+        // Start background music loop
+        if (backgroundMusicAudioSource != null && backgroundMusicAudioSource.clip != null)
+        {
+            backgroundMusicAudioSource.loop = true;
+            backgroundMusicAudioSource.Play();
+        }
     }
 
     private IEnumerator AnimateCountdownText()
@@ -118,6 +155,12 @@ public class UI_manager : MonoBehaviour
 
         buttonPlay.GetComponent<Image>().sprite = playSprite;
         isTimerRunning = false;
+
+        // Pause background music when timer is paused
+        if (backgroundMusicAudioSource != null && backgroundMusicAudioSource.isPlaying)
+        {
+            backgroundMusicAudioSource.Pause();
+        }
     }
 
     private IEnumerator TimerCountdown()
@@ -134,14 +177,29 @@ public class UI_manager : MonoBehaviour
 
         UpdateTimerText(0);
         currentTime = totalTime;
+        
+        // Stop the timer immediately to prevent sparkles during game over
+        isTimerRunning = false;
+        buttonPlay.GetComponent<Image>().sprite = playSprite;
 
         // show "Artwork Completed!" for 3 seconds
         yield return StartCoroutine(ShowArtworkCompletedMessage());
-        StopTimer();
     }
 
     private IEnumerator ShowArtworkCompletedMessage()
     {
+        // Stop background music
+        if (backgroundMusicAudioSource != null && backgroundMusicAudioSource.isPlaying)
+        {
+            backgroundMusicAudioSource.Stop();
+        }
+
+        // Play whistle sound
+        if (whistleAudioSource != null && whistleAudioSource.clip != null)
+        {
+            whistleAudioSource.Play();
+        }
+
         text_321.gameObject.SetActive(true);
         text_321.text = "Artwork Completed!";
         text_321.transform.localScale = Vector3.one;

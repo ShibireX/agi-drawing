@@ -21,9 +21,15 @@ public class PaintSparkleManager : MonoBehaviour
     public Paint.PaintSystem paintSystem;
     public Transform brushTip;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource colorChangeAudioSource;
+    [SerializeField] private AudioSource flareAudioSource;
+    [SerializeField] private AudioSource starsAudioSource;
+
     private int playerID = 0;
     private ImuUdpLogger imu_receiver;
-    private Color lastBrushColor; 
+    private Color lastBrushColor;
+    private UI_manager uiManager; 
 
     void Start()
     {
@@ -44,6 +50,13 @@ public class PaintSparkleManager : MonoBehaviour
             Debug.LogWarning("IMUReceiver not found on MainCamera! Please add the IMUReceiver script to your MainCamera.");
         }
 
+        // Find the UI_manager in the scene
+        uiManager = FindObjectOfType<UI_manager>();
+        if (uiManager == null)
+        {
+            Debug.LogWarning("UI_manager not found in scene! Sparkles will not check timer state.");
+        }
+
         // Initialize last brush color
         if (imu_receiver != null && playerID < imu_receiver.brushes_colour.Length)
         {
@@ -51,6 +64,18 @@ public class PaintSparkleManager : MonoBehaviour
         }
 
         // Stop all child particle systems on start to prevent auto-play
+        StopAllSparkles();
+    }
+
+    void OnEnable()
+    {
+        // Also stop sparkles when the GameObject is re-enabled (e.g., after screenshot)
+        // This prevents "Play On Awake" particles from triggering
+        StopAllSparkles();
+    }
+
+    void StopAllSparkles()
+    {
         for (int i = 0; i < transform.childCount; i++)
         {
             ParticleSystem ps = transform.GetChild(i).GetComponent<ParticleSystem>();
@@ -63,7 +88,7 @@ public class PaintSparkleManager : MonoBehaviour
 
     void Update()
     {
-        // Check for brush color change
+        // Check for brush color change (always active, even when timer is stopped)
         if (imu_receiver != null && playerID < imu_receiver.brushes_colour.Length)
         {
             Color currentBrushColor = imu_receiver.brushes_colour[playerID];
@@ -73,6 +98,12 @@ public class PaintSparkleManager : MonoBehaviour
             {
                 Debug.Log($"Brush color changed from {lastBrushColor} to {currentBrushColor}");
                 lastBrushColor = currentBrushColor;
+                
+                // Play color change sound
+                if (colorChangeAudioSource != null && colorChangeAudioSource.clip != null)
+                {
+                    colorChangeAudioSource.Play();
+                }
                 
                 // Play the second child particle system (BasicHit at index 1)
                 if (transform.childCount > 1)
@@ -86,6 +117,13 @@ public class PaintSparkleManager : MonoBehaviour
                     }
                 }
             }
+        }
+
+        // Skip velocity-based sparkles and paint if timer is not running
+        if (uiManager != null && !uiManager.isTimerRunning)
+        {
+            lastPosition = transform.position;
+            return;
         }
 
         // Calculate velocity magnitude
@@ -128,6 +166,19 @@ public class PaintSparkleManager : MonoBehaviour
                     else
                     {
                         Debug.LogWarning($"Cannot apply color - imu_receiver: {imu_receiver != null}, playerID: {playerID}");
+                    }
+                    
+                    // Play appropriate sound based on effect name
+                    string effectName = ps.name.ToLower();
+                    if (effectName.Contains("star") && starsAudioSource != null && starsAudioSource.clip != null)
+                    {
+                        starsAudioSource.Play();
+                    }
+                    else if ((effectName.Contains("glow") || effectName.Contains("impact") || effectName.Contains("cfxr")) 
+                             && flareAudioSource != null && flareAudioSource.clip != null)
+                    {
+                        // Flare/Impact effect
+                        flareAudioSource.Play();
                     }
                     
                     ps.Play();

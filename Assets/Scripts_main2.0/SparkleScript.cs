@@ -65,7 +65,7 @@ public class SparkleScript : MonoBehaviour
             }
 
             // Play particle system at child index = currentSparkle
-            Debug.Log("current sparkle: " + currentSparkle);
+            //Debug.Log("current sparkle: " + currentSparkle);
             if (transform.childCount > currentSparkle)
             {
                 ParticleSystem ps = transform.GetChild(currentSparkle).GetComponent<ParticleSystem>();

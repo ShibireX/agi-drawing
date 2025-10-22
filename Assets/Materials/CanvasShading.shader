@@ -4,6 +4,8 @@ Shader "Custom/CanvasShading"
         [Header(Color)]
         _Color("Base color", Color) = (1, 0, 1, 1)
         _MainTex ("Main tex", 2D) = "white" {}
+        _NormalTex ("Normal Map", 2D) = "bump" {}
+        _RoughnessTex ("Roughness Map", 2D) = "white" {}
         _AmbientColor("Ambient color", Color) = (0.1, 0, .01, 1)
         _SpecularColor("Specular Color", Color) = (0.9, 0.9, 0.9, 1)
         _RimColor("Rim color", Color) = (1, 0, 1, 1)
@@ -18,7 +20,7 @@ Shader "Custom/CanvasShading"
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags { "RenderType"="Opaque" "Queue"="Geometry"}
 
         // Cel Shading Pass, some things changed for visual preference
         Pass
@@ -51,6 +53,8 @@ Shader "Custom/CanvasShading"
             };
 
             sampler2D _MainTex;
+            sampler2D _NormalTex;
+            sampler2D _RoughnessTex;
             float4 _MainTex_ST;
             fixed4 _Color;
             fixed4 _ShadowColor;
@@ -61,6 +65,7 @@ Shader "Custom/CanvasShading"
             half _RimAmount;
             half _bandCutOff;
             int _bandAmount;
+            float _OutlineThickness;
 
             v2f vert(appdata v)
             {
@@ -71,80 +76,93 @@ Shader "Custom/CanvasShading"
                 float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
                 o.worldPos = worldPos;
                 o.viewDir = normalize(_WorldSpaceCameraPos - worldPos);
-
-
                 return o;
             }
 
-            fixed4 frag(v2f i) : SV_Target
-            {
-                // Main directional light
-                fixed3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
-                fixed3 lightColor = _LightColor0.rgb;
-                // Albedo texture 
-                fixed3 albedoTex = tex2D(_MainTex, i.uv).rgb;
-                // Base calculations
-                fixed3 normal = normalize(i.normalDir);
-                float n_dot_L = saturate(dot(lightDir, normal));
-                // Bands
-                float diffuse = round(saturate(n_dot_L / max(_bandCutOff, 0.0001)) * _bandAmount) / _bandAmount;
-                // Specular
-                float3 viewDir = normalize(i.viewDir);
-                float3 halfVector = normalize(lightDir + viewDir);
-                float h_dot_v = dot(viewDir, reflect(-lightDir, normal));
-                float specular = dot(normal, halfVector);
-                specular = _SpecularColor.rgb * step(1 - _Glossiness, h_dot_v);
-                // Rim light / outline
-                float rimDot = 1 - saturate(dot(viewDir, normal));
-                float rimAmount = step(1 - _RimAmount, rimDot);
-                float3 rimLight = rimAmount * _RimColor.rgb * n_dot_L;
-                // Final color
-                float3 finalColor = (_Color.rgb + albedoTex + specular) * lightColor * _AmbientColor.rgb * diffuse + rimLight;
-                return fixed4(finalColor, 1);
-            }
+fixed4 frag(v2f i) : SV_Target
+{
+    // === Textures ===
+    fixed3 albedo = tex2D(_MainTex, i.uv).rgb * _Color.rgb;
+    fixed3 normalTex = UnpackNormal(tex2D(_NormalTex, i.uv));
+    float roughness = tex2D(_RoughnessTex, i.uv).r; // single channel roughness
+
+    // === Lighting ===
+    fixed3 N = normalize(i.normalDir + normalTex);           // combine mesh + normal map
+    fixed3 L = normalize(_WorldSpaceLightPos0.xyz);          // main light
+    fixed3 V = normalize(i.viewDir);
+    fixed3 H = normalize(L + V);
+
+    // Basic Lambert diffuse
+    float NdotL = saturate(dot(N, L));
+    
+    // Cel banding for stylization
+    float bandedDiffuse = floor(NdotL * _bandAmount) / _bandAmount;
+    bandedDiffuse = smoothstep(_bandCutOff - 0.05, _bandCutOff + 0.05, bandedDiffuse);
+
+    // === Specular from roughness ===
+    float smoothness = 1.0 - roughness;                      // invert roughness to get smoothness
+    float specularStrength = pow(saturate(dot(N, H)), smoothness * 64.0); 
+    specularStrength = step(0.5, specularStrength);          // hard cel step
+    fixed3 specular = specularStrength * _SpecularColor.rgb;
+
+    // === Combine ===
+    fixed3 lightColor = _LightColor0.rgb;
+    fixed3 ambient = _AmbientColor.rgb * albedo;
+    fixed3 diffuse = albedo * lightColor * bandedDiffuse;
+    fixed3 finalColor = ambient + diffuse + specular;
+
+    return fixed4(finalColor, 1.0);
+}
             ENDCG
         }
 
         // Outline Pass, had to do it here since my original was done in urp
-        Pass
-        {
-            Name "Outline"
-            Cull Front   
+               Pass{
+            Cull front
 
             CGPROGRAM
-            #pragma vertex vert
-            #pragma fragment frag
+
+            //include useful shader functions
             #include "UnityCG.cginc"
 
-            struct appdata
-            {
+            //define vertex and fragment shader
+            #pragma vertex vert
+            #pragma fragment frag
+
+            //color of the outline
+            fixed4 _OutlineColor;
+            //thickness of the outline
+            float _OutlineThickness;
+
+            //the object data that's available to the vertex shader
+            struct appdata{
                 float4 vertex : POSITION;
                 float3 normal : NORMAL;
             };
 
-            struct v2f
-            {
-                float4 pos : SV_POSITION;
+            //the data that's used to generate fragments and can be read by the fragment shader
+            struct v2f{
+                float4 position : SV_POSITION;
             };
-            float _OutlineThickness;
-            fixed4 _OutlineColor;
-            v2f vert(appdata v)
-            {
+
+            //the vertex shader
+            v2f vert(appdata v){
                 v2f o;
-                // invert extrude normal style, not perfect but works
-                float3 norm = normalize(UnityObjectToWorldNormal(v.normal));
-                float3 pos = v.vertex.xyz + norm * _OutlineThickness;
-                o.pos = UnityObjectToClipPos(float4(pos, 1.0));
+                // Extrude along world space normal for consistent thickness
+                float3 worldNormal = normalize(UnityObjectToWorldNormal(v.normal));
+                float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
+                float3 outlinePos = worldPos + worldNormal * _OutlineThickness;
+                o.position = UnityWorldToClipPos(float4(outlinePos, 1.0));
                 return o;
             }
 
-            fixed4 frag(v2f i) : SV_Target
-            {
+            //the fragment shader
+            fixed4 frag(v2f i) : SV_TARGET{
                 return _OutlineColor;
             }
+
             ENDCG
         }
-
         
     }
     FallBack "Diffuse"

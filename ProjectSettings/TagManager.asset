@@ -5,12 +5,11 @@ TagManager:
   serializedVersion: 2
   tags:
   - Projectile
-  - Brush
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - Canvas
+  - 
   - Water
   - UI
   - 

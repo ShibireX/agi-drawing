@@ -4,16 +4,16 @@ Shader "Custom/CelShading"
         [Header(Color)]
         _Color("Base color", Color) = (1, 0, 1, 1)
         _MainTex ("Main tex", 2D) = "white" {}
-        [HDR]_AmbientColor("Ambient color", Color) = (0.1, 0, .01, 1)
-        [HDR]_SpecularColor("Specular Color", Color) = (0.9, 0.9, 0.9, 1)
-        [HDR]_RimColor("Rim color", Color) = (1, 0, 1, 1)
+        _AmbientColor("Ambient color", Color) = (0.1, 0, .01, 1)
+        _SpecularColor("Specular Color", Color) = (0.9, 0.9, 0.9, 1)
+        _RimColor("Rim color", Color) = (1, 0, 1, 1)
         _Glossiness("Glossiness", Range(0.0, 1.0)) = 0.5
         [Header(Rim settings)]
         _RimAmount("Rim amount", Range(0.0, 1.0)) = 0.5
         [Header(Band cutoffs)]
         _bandCutOff("Band cutoff", Range(0.0, 1.0)) = 0.5
         _bandAmount("Band amount", int) = 4
-        [HDR]_Emission("Emission", Color) = (0, 0, 0, 1)
+        _Emission("Emission", Color) = (0, 0, 0, 1)
         _OutlineColor("Outline Color", Color) = (0,0,0,1)
         _OutlineThickness("Outline Thickness", Range(0.0,0.05)) = 0.02
     }

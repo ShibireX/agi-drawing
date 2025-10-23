@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: canvasDarkWood
-  m_Shader: {fileID: 4800000, guid: 3515a189a43e4d545810759fff96b225, type: 3}
+  m_Name: Canvas_LightWood
+  m_Shader: {fileID: 4800000, guid: cb661b474854d4dabb9e47ba46924a33, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -23,6 +23,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _BaseColorTex:
+        m_Texture: {fileID: 2800000, guid: 9ac007b75575b4947b2ef9465c2dfaad, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _BumpMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -44,19 +48,19 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 3f307d5bcdeec5046949bbf9c06dad41, type: 3}
+        m_Texture: {fileID: 2800000, guid: 9ac007b75575b4947b2ef9465c2dfaad, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _NormalMap:
+    - _MetallicTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalTex:
-        m_Texture: {fileID: 2800000, guid: a5d6f0e795e80b542bc8ef6e7c644445, type: 3}
+        m_Texture: {fileID: 2800000, guid: 8a6961b179ac9de4780d8c264391e645, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
@@ -67,12 +71,8 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _RoughnessMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - _RoughnessTex:
-        m_Texture: {fileID: 2800000, guid: e39e760c91e0a8540beb660dd6706acb, type: 3}
+        m_Texture: {fileID: 2800000, guid: 59218a84ede37b64ea1cf9464cb19a8c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
@@ -82,27 +82,30 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _GlossMapScale: 1
-    - _Glossiness: 0.5
+    - _Glossiness: 0.587
     - _GlossyReflections: 1
     - _Metallic: 0
+    - _MetallicStrength: 0.495
     - _Mode: 0
+    - _NormalStrength: 2
     - _OcclusionStrength: 1
-    - _OutlineThickness: 0.0056
+    - _OutlineThickness: 0.006
     - _Parallax: 0.02
-    - _RimAmount: 0.5
+    - _RimAmount: 0.046
+    - _RoughnessStrength: 1
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _UVSec: 0
     - _ZWrite: 1
-    - _bandAmount: 4
+    - _bandAmount: 1
     - _bandCutOff: 0
     m_Colors:
     - _AmbientColor: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 1, g: 0.741894, b: 0.40566027, a: 1}
-    - _Emission: {r: 0, g: 0, b: 0, a: 1}
+    - _Color: {r: 0.98742133, g: 0.6658659, b: 0.4005576, a: 1}
+    - _Emission: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
-    - _RimColor: {r: 1, g: 0.6117647, b: 0, a: 1}
-    - _SpecularColor: {r: 0.9, g: 0.9, b: 0.9, a: 1}
+    - _RimColor: {r: 0.9748427, g: 0.4628969, b: 0.4628969, a: 1}
+    - _SpecularColor: {r: 0.9748427, g: 0.2053912, b: 0.2053912, a: 1}
   m_BuildTextureStacks: []

@@ -8,25 +8,24 @@ using UnityEngine;
 //jobbar i lokalt eftersom att vi bryr bara om relationen mellan brushen och eulers
 public class BrushWiggle : MonoBehaviour
 {
-
-    [SerializeField] public Paint.PaintSystem paintSystem;
-
-    // Per-instance acceleration magnitude (set by IMUReceiver for each device)
     [HideInInspector]
     public float deviceAMag = 0f;
-    
+
     [HideInInspector]
     public float fireAccelThreshold = 2.0f;
+    [SerializeField]
+    public float rotationThreshold = 5.0f; // degrees per frame
 
     public Transform[] bones;
     [SerializeField] public Transform brushroot;
-
     [Range(0f, 20f)] public float wiggleSpeed = 5f;
     private List<WiggleBone> bonestojiggle;
     [SerializeField]
     public float MaxAngle = 15f;
     //minskar mängden desto mer  
     public float AngleReduction = 5f;
+    private Vector3 lastPosition;
+    private Vector3 lastBrushRotation;             
 
     public struct WiggleBone
     {
@@ -37,8 +36,9 @@ public class BrushWiggle : MonoBehaviour
 
     void Start()
     {
-        if (paintSystem == null)
-            paintSystem = FindObjectOfType<Paint.PaintSystem>();
+        lastPosition = transform.position;
+        lastBrushRotation = brushroot.localEulerAngles;
+
         bonestojiggle = new List<WiggleBone>();
         // statiskt ben så skippar första, antar att den finns i listan. inkludera alla ben 
         for (int i = 1; i < bones.Length; i++)
@@ -51,16 +51,18 @@ public class BrushWiggle : MonoBehaviour
         }
     }
 
-
     public void ApplyWiggle()
     {
         Vector3 brushEuler = brushroot.localEulerAngles;
         brushEuler = NormalizeEuler(brushEuler);
-
+        
+        // Calculate rotation difference from last frame
+        Vector3 rotationDelta = brushEuler - lastBrushRotation;
+        rotationDelta = NormalizeEuler(rotationDelta);
+        float rotationMagnitude = rotationDelta.magnitude;
 
         for (int i = 0; i < bonestojiggle.Count; i++)
         {
-
             WiggleBone wb = bonestojiggle[i];
             Vector3 targetOffset = -brushEuler;
 
@@ -71,9 +73,10 @@ public class BrushWiggle : MonoBehaviour
             targetOffset.x = Mathf.Clamp(targetOffset.x, negativ_limit, positiv_limit);
             targetOffset.y = 0f; // disable Y wiggle
             targetOffset.z = Mathf.Clamp(targetOffset.z, negativ_limit, positiv_limit);
-            if (paintSystem.currentMovementSpeed >= paintSystem.movementThreshold || deviceAMag >= fireAccelThreshold)
+            
+            if (rotationMagnitude > rotationThreshold)
             {
-
+                
                 wb.eulerOffset = Vector3.Lerp(
                     wb.eulerOffset,
                     targetOffset,
@@ -95,12 +98,13 @@ public class BrushWiggle : MonoBehaviour
                 bonestojiggle[i] = wb;
             }
         }
-
+        
+        // Update last rotation for next frame
+        lastBrushRotation = brushEuler;
     }
 
     void LateUpdate()
     {
-
         ApplyWiggle();
     }
 

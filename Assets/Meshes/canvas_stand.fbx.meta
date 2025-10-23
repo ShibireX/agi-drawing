@@ -1,9 +1,19 @@
 fileFormatVersion: 2
-guid: 5c88afbd7587e9444acb4db9e21c5e81
+guid: fc493ec2664413440be5305380fb8d89
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Canvas_Darkwood
+    second: {fileID: 2100000, guid: a13b90d385e0a2b4d874cd63f59d0f24, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Canvas_Lightwood
+    second: {fileID: 2100000, guid: f4a2679221a988045926a069f31a42af, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

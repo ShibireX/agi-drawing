@@ -45,8 +45,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c62adfd0807147d4bbb1eec61a6671fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  particleCount: 125000
-  activeCount: 125000
+  particleCount: 250000
+  activeCount: 250000
   defaultRadius: 0.005
   initialVelocityRange: {x: 1, y: 1, z: 1}
   initialColor: {r: 1, g: 1, b: 1, a: 1}
@@ -67,21 +67,22 @@ MonoBehaviour:
   gravity: -5
   damping: 0.05
   airResistance: 0.3
-  threadGroupSizeX: 256
-  maxInitialSpeed: 8
-  spreadAngle: 0.4
-  forwardBias: 0.6
+  threadGroupSizeX: 512
+  maxInitialSpeed: 9
+  spreadAngle: 0.174
+  forwardBias: 0.503
   forwardDirection: {x: 0, y: 0, z: 1}
-  spawnRate: 100000
-  lifeTime: 30
+  spawnRate: 250000
+  lifeTime: 1.5
   fadeOutDuration: 1
-  spawnRadius: 0.015
+  spawnRadius: 0.04
   movementThreshold: 0
   debugMovement: 0
   currentMovementSpeed: 0
-  mesh: {fileID: -2432090755550338912, guid: 4dea3395154af394d9d388505a2bc367, type: 3}
+  mesh: {fileID: -2432090755550338912, guid: e4dec45c38579fc4c95334d76172a6e6, type: 3}
   renderMat: {fileID: 2100000, guid: 8023c82a80376934aa948d37fe4f1906, type: 2}
   baseColor: {r: 1, g: 1, b: 1, a: 1}
+  canvasPainter: {fileID: 0}
   spawnPosition: {x: 0, y: 0, z: 0}
   spawnDirection: {x: 0, y: 0, z: 0}
   spawnColor: {x: 0, y: 0, z: 0}

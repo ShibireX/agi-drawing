@@ -19,6 +19,7 @@ public class UI_manager : MonoBehaviour
     [SerializeField] private Image sandTimerDown;
     [SerializeField] private Paint.CanvasPainter canvasPainter;
     [SerializeField] private ImuUdpLogger imuUdpLogger;
+    [SerializeField] private GameObject characterGameObject;
 
     [Header("Audio")]
     [SerializeField] private AudioSource countdownAudioSource;
@@ -272,10 +273,21 @@ public class UI_manager : MonoBehaviour
             imuUdpLogger.HideAllBrushes();
         }
 
+        // Hide character renderers temporarily (keep animations running)
+        Renderer[] characterRenderers = null;
+        if (characterGameObject != null)
+        {
+            characterRenderers = characterGameObject.GetComponentsInChildren<Renderer>();
+            foreach (Renderer renderer in characterRenderers)
+            {
+                renderer.enabled = false;
+            }
+        }
+
         // Wait for end of frame to ensure rendering is complete
         yield return new WaitForEndOfFrame();
 
-        // Take a screenshot of the screen (now without brushes visible)
+        // Take a screenshot of the screen (now without brushes and character visible)
         Texture2D fullTex = ScreenCapture.CaptureScreenshotAsTexture();
 
         int width = fullTex.width;
@@ -312,6 +324,15 @@ public class UI_manager : MonoBehaviour
 
         // Cleanup memory
         Destroy(fullTex);
+
+        // Show character renderers again
+        if (characterRenderers != null)
+        {
+            foreach (Renderer renderer in characterRenderers)
+            {
+                renderer.enabled = true;
+            }
+        }
 
         // Show brushes again
         if (imuUdpLogger != null)

@@ -15,19 +15,16 @@ public static class GameEvents
     // Trigger methods
     public static void TriggerGameStarted()
     {
-        Debug.Log("GameEvents: Game Started");
         OnGameStarted?.Invoke();
     }
 
     public static void TriggerGameEnded()
     {
-        Debug.Log("GameEvents: Game Ended");
         OnGameEnded?.Invoke();
     }
 
     public static void TriggerGameReset()
     {
-        Debug.Log("GameEvents: Game Reset");
         OnGameReset?.Invoke();
     }
 

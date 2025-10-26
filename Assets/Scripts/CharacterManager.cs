@@ -32,7 +32,6 @@ public class CharacterManager : MonoBehaviour
         GameEvents.OnGameEnded += OnGameEnded;
         GameEvents.OnGameReset += OnGameReset;
 
-        // Start random handwave animations when game hasn't started
         StartRandomHandwaveAnimations();
     }
 
@@ -61,12 +60,10 @@ public class CharacterManager : MonoBehaviour
         // Set animator parameters
         characterAnimator.SetBool("is_game_started", true);
         characterAnimator.SetBool("is_game_ended", false);
-        
+
         // Trigger countdown animation
         characterAnimator.SetBool("is_character_counting", true);
-        
-        // Start coroutine to turn off countdown animation after a delay
-        StartCoroutine(TurnOffCountdownAnimation());
+                StartCoroutine(TurnOffCountdownAnimation());
     }
 
     private void OnGameEnded()
@@ -83,10 +80,9 @@ public class CharacterManager : MonoBehaviour
 
     private void OnGameReset()
     {
-        // Reset everything to starting position
+        // Reset everything to starting position and play handwave animations
         ResetGameState();
         
-        // Start random handwave animations again
         StartRandomHandwaveAnimations();
     }
 
@@ -139,13 +135,11 @@ public class CharacterManager : MonoBehaviour
                 float waitTime = Random.Range(2f, 5f);
                 yield return new WaitForSeconds(waitTime);
 
-                // Only play handwave if game hasn't started and cooldown is satisfied
                 if (!isGameStarted && (Time.time - lastHandwaveTime) >= handwaveCooldown)
                 {
                     PlayRandomHandwave();
                     lastHandwaveTime = Time.time; // Update the last handwave time
                     
-                    // Wait for animation to complete (assuming 1-2 seconds)
                     yield return new WaitForSeconds(Random.Range(1f, 2f));
                 }
             }

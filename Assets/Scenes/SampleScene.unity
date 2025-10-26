@@ -2763,7 +2763,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterAnimator: {fileID: 0}
   handwaveCooldown: 15
-  thumbsUpCooldown: 15
+  thumbsUpCooldown: 1
   countdownDuration: 4
 --- !u!1 &180415727202612931
 GameObject:

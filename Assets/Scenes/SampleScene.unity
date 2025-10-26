@@ -2298,6 +2298,10 @@ PrefabInstance:
       propertyPath: m_WarningMessage
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: d29410ac45fc61641a47c254ad22e073, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2758,6 +2762,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   characterAnimator: {fileID: 0}
+  handwaveCooldown: 15
+  thumbsUpCooldown: 15
+  countdownDuration: 4
 --- !u!1 &180415727202612931
 GameObject:
   m_ObjectHideFlags: 0

@@ -83,6 +83,9 @@ public class UI_manager : MonoBehaviour
 
     private IEnumerator StartCountdownSequence()
     {
+        // Trigger game started event immediately when countdown begins
+        GameEvents.TriggerGameStarted();
+
         // Play countdown audio
         if (countdownAudioSource != null && countdownAudioSource.clip != null)
         {
@@ -182,6 +185,9 @@ public class UI_manager : MonoBehaviour
         isTimerRunning = false;
         buttonPlay.GetComponent<Image>().sprite = playSprite;
 
+        // Trigger game ended event
+        GameEvents.TriggerGameEnded();
+
         // show "Artwork Completed!" for 3 seconds
         yield return StartCoroutine(ShowArtworkCompletedMessage());
     }
@@ -232,6 +238,9 @@ public class UI_manager : MonoBehaviour
         text_321.gameObject.SetActive(false);
 
         TakeScreenshot();
+
+        // Trigger game reset event
+        GameEvents.TriggerGameReset();
 
         //canvasPainter.ClearCanvas();
     }

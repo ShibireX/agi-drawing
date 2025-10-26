@@ -32,13 +32,15 @@ Shader "Unlit/InstancedParticlesUnlit-BIRP"
             float4 _BaseColor;
 
             struct appdata {
-                float3 vertex : POSITION;
-                uint   instanceID : SV_InstanceID;
+                float3 vertex    : POSITION;
+                float2 uv        : TEXCOORD0;
+                uint   instanceID: SV_InstanceID;
             };
 
             struct v2f {
                 float4 posCS : SV_POSITION;
                 float4 col   : COLOR;
+                float2 uv    : TEXCOORD0;
             };
 
             v2f vert(appdata v)
@@ -57,12 +59,32 @@ Shader "Unlit/InstancedParticlesUnlit-BIRP"
                 // world -> clip
                 o.posCS = mul(UNITY_MATRIX_VP, float4(worldPos, 1));
                 o.col   = p.color * _BaseColor;
+
+                // pass uv
+                o.uv = v.uv;
+
                 return o;
             }
 
             fixed4 frag(v2f i) : SV_Target
             {
-                return i.col; // raw color, no lighting
+                // Distance from quad center in UV space.
+                float2 centered = i.uv - float2(0.5, 0.5);
+                float dist = length(centered) * 2.0;
+
+                float alphaMask = saturate(1.0 - dist);
+
+                clip(alphaMask - 0.01);
+
+                float4 rawColor = i.col;
+                float4 blendColor = float4(0.85, 0.85, 0.85, 1.0);
+                float mixFactor = 0.3;
+                float4 baseCol = rawColor * (1.0f - mixFactor) + blendColor * mixFactor;
+
+                // Apply spherical alpha
+                baseCol.a *= alphaMask;
+
+                return baseCol;
             }
             ENDHLSL
         }

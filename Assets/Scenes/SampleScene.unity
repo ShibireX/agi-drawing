@@ -3261,7 +3261,7 @@ MonoBehaviour:
   countdownAudioSource: {fileID: 239639562}
   backgroundMusicAudioSource: {fileID: 354062038}
   whistleAudioSource: {fileID: 450712294}
-  totalTime: 10
+  totalTime: 60
   isTimerRunning: 0
 --- !u!222 &6642621724155528433
 CanvasRenderer:

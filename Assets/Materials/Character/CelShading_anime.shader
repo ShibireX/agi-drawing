@@ -5,7 +5,7 @@ Shader "Custom/Character_anime"
         _Color("Base color", Color) = (1, 0, 1, 1)
         _AmbientColor("Ambient color", Color) = (0.1, 0, 0.1, 1)
         [Header(Cel Shading)]
-        _bandCutOff("Band cutoff", Range(0.0, 1.0)) = 0.5
+        _bandCutOff("Band cutoff", Range(0.0, 0.1)) = 0.05
         _bandAmount("Band amount", int) = 4
         [Header(Outline)]
         _OutlineColor("Outline Color", Color) = (0,0,0,1)
@@ -78,9 +78,10 @@ fixed4 frag(v2f i) : SV_Target
     float NdotL = saturate(dot(N, L));
     
     // Cel banding for anime stylization - use step function for hard bands
+    //float celBands = floor(NdotL * _bandAmount) / _bandAmount;
+    //celBands = step(_bandCutOff, celBands);  // Hard cutoff instead of smoothstep
     float celBands = floor(NdotL * _bandAmount) / _bandAmount;
-    celBands = step(_bandCutOff, celBands);  // Hard cutoff instead of smoothstep
-
+    celBands = smoothstep(_bandCutOff - 0.05, _bandCutOff + 0.05, celBands);
     // === Combine (No specular, no metallic, pure matte) ===
     fixed3 lightColor = _LightColor0.rgb;
     fixed3 ambient = _AmbientColor.rgb * albedo;

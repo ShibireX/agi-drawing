@@ -19,7 +19,7 @@ Shader "Custom/CelShading"
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags { "RenderType"="Opaque"  }
 
         // Cel Shading Pass, some things changed for visual preference
         Pass

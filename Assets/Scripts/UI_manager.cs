@@ -3,6 +3,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.IO;
 
 
 public class UI_manager : MonoBehaviour
@@ -27,6 +28,16 @@ public class UI_manager : MonoBehaviour
     [SerializeField] private AudioSource whistleAudioSource;
     [SerializeField] private AudioSource surprisedUtterance;
 
+    [Header("Screenshot Settings")]
+    [SerializeField] private string screenshotFolderName = "Drawings";
+    [SerializeField] private bool useCustomPath = false;
+    [SerializeField] private string customSavePath = "";
+    [Header("Canvas Crop Settings (0.0 to 1.0)")]
+    [SerializeField] [Range(0f, 1f)] private float cropXPercent = 0.21f;
+    [SerializeField] [Range(0f, 1f)] private float cropYPercent = 0.2f;
+    [SerializeField] [Range(0f, 1f)] private float cropWidthPercent = 0.58f;
+    [SerializeField] [Range(0f, 1f)] private float cropHeightPercent = 0.6f;
+
     public int totalTime = 10; // seconds
     private int currentTime;
     public bool isTimerRunning = false;
@@ -35,19 +46,16 @@ public class UI_manager : MonoBehaviour
 
     private void Start()
     {
-        // Activate Display 2 if available
-        if (Display.displays.Length > 1)
-        {
-            Display.displays[1].Activate();
-        }
-
         UpdateTimerText(totalTime);
         currentTime = totalTime;
         text_321.gameObject.SetActive(false);
 
         ResetSandTimer();
 
-        sandStep = 1.0f / totalTime; 
+        sandStep = 1.0f / totalTime;
+        
+        // Create screenshot directory if it doesn't exist
+        EnsureScreenshotDirectoryExists();
     }
 
     public void ToggleTimer()
@@ -261,6 +269,29 @@ public class UI_manager : MonoBehaviour
         sandTimerDown.fillAmount = 0f;
     }
 
+    private void EnsureScreenshotDirectoryExists()
+    {
+        string savePath = GetScreenshotDirectory();
+        if (!Directory.Exists(savePath))
+        {
+            Directory.CreateDirectory(savePath);
+            Debug.Log($"Created screenshot directory at: {savePath}");
+        }
+    }
+    
+    private string GetScreenshotDirectory()
+    {
+        if (useCustomPath && !string.IsNullOrEmpty(customSavePath))
+        {
+            return customSavePath;
+        }
+        
+        // Use Unity's persistent data path (cross-platform)
+        // Mac: ~/Library/Application Support/CompanyName/ProductName/
+        // Windows: %userprofile%\AppData\LocalLow\CompanyName\ProductName\
+        return Path.Combine(Application.persistentDataPath, screenshotFolderName);
+    }
+
     private void TakeScreenshot()
     {
         StartCoroutine(CaptureAndShowScreenshot());
@@ -294,11 +325,11 @@ public class UI_manager : MonoBehaviour
         int width = fullTex.width;
         int height = fullTex.height;
 
-        // Parameters to crop to canvas area
-        int cropX = Mathf.RoundToInt(width * 0.2f);
-        int cropY = Mathf.RoundToInt(height * 0.2f);
-        int cropWidth = Mathf.RoundToInt(width * 0.6f);
-        int cropHeight = Mathf.RoundToInt(height * 0.6f);
+        // Parameters to crop to canvas area (configurable in Inspector)
+        int cropX = Mathf.RoundToInt(width * cropXPercent);
+        int cropY = Mathf.RoundToInt(height * cropYPercent);
+        int cropWidth = Mathf.RoundToInt(width * cropWidthPercent);
+        int cropHeight = Mathf.RoundToInt(height * cropHeightPercent);
 
         // Crop the screenshot to canvas area
         Color[] pixels = fullTex.GetPixels(cropX, cropY, cropWidth, cropHeight);
@@ -306,25 +337,12 @@ public class UI_manager : MonoBehaviour
         croppedTex.SetPixels(pixels);
         croppedTex.Apply();
 
-        // Create a Sprite from the cropped texture
-        Sprite screenshotSprite = Sprite.Create(
-            croppedTex,
-            new Rect(0, 0, cropWidth, cropHeight),
-            new Vector2(0.5f, 0.5f)
-        );
-
-        // Update the gallery image
-        if (galleryImages != null && galleryImages.Count > 0)
-        {
-            Image targetImage = galleryImages[currentGalleryIndex];
-            targetImage.sprite = screenshotSprite;
-            //targetImage.preserveAspect = true;
-
-            currentGalleryIndex = (currentGalleryIndex + 1) % galleryImages.Count;
-        }
+        // Save to disk
+        SaveScreenshotToDisk(croppedTex);
 
         // Cleanup memory
         Destroy(fullTex);
+        Destroy(croppedTex);
 
         // Show character renderers again
         if (characterRenderers != null)
@@ -342,6 +360,24 @@ public class UI_manager : MonoBehaviour
         }
 
         canvasPainter.ClearCanvas();
+    }
+
+    private void SaveScreenshotToDisk(Texture2D texture)
+    {
+        // Generate filename with timestamp
+        string timestamp = System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+        string fileName = $"Drawing_{timestamp}.png";
+        
+        string savePath = GetScreenshotDirectory();
+        string fullPath = Path.Combine(savePath, fileName);
+        
+        // Encode texture to PNG
+        byte[] bytes = texture.EncodeToPNG();
+        
+        // Save to disk
+        File.WriteAllBytes(fullPath, bytes);
+        
+        Debug.Log($"Screenshot saved to: {fullPath}");
     }
 
     /// <summary>

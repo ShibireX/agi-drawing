@@ -25,6 +25,7 @@ public class UI_manager : MonoBehaviour
     [SerializeField] private AudioSource countdownAudioSource;
     [SerializeField] private AudioSource backgroundMusicAudioSource;
     [SerializeField] private AudioSource whistleAudioSource;
+    [SerializeField] private AudioSource surprisedUtterance;
 
     public int totalTime = 10; // seconds
     private int currentTime;
@@ -341,6 +342,25 @@ public class UI_manager : MonoBehaviour
         }
 
         canvasPainter.ClearCanvas();
+    }
+
+    /// <summary>
+    /// Call this method when a flare is triggered to play the surprised utterance with a 0.5s delay
+    /// </summary>
+    public void PlaySurprisedUtteranceOnFlare()
+    {
+        StartCoroutine(PlaySurprisedUtteranceWithDelay());
+    }
+
+    private IEnumerator PlaySurprisedUtteranceWithDelay()
+    {
+        yield return new WaitForSeconds(0.5f);
+
+        if (surprisedUtterance != null && surprisedUtterance.clip != null && !surprisedUtterance.isPlaying)
+        {
+            surprisedUtterance.loop = false;
+            surprisedUtterance.Play();
+        }
     }
 
  }

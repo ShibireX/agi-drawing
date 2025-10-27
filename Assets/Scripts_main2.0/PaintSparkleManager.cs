@@ -179,6 +179,12 @@ public class PaintSparkleManager : MonoBehaviour
                     {
                         // Flare/Impact effect
                         flareAudioSource.Play();
+                        
+                        // Play surprised utterance on flare
+                        if (uiManager != null)
+                        {
+                            uiManager.PlaySurprisedUtteranceOnFlare();
+                        }
                     }
                     
                     ps.Play();

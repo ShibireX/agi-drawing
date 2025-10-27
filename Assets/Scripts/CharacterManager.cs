@@ -4,11 +4,6 @@ public class CharacterManager : MonoBehaviour
 {
     [SerializeField] private Animator characterAnimator;
 
-    [Header("Audio")]
-    [SerializeField] private AudioSource gameStartUtterance;
-    [SerializeField] private AudioSource gameOverUtterance;
-    [SerializeField] private AudioSource normalUtterance;
-
     private bool isGameStarted = false;
     private bool isGameEnded = false;
 
@@ -17,14 +12,9 @@ public class CharacterManager : MonoBehaviour
 
     private float handwaveTimer = 0f;
     private float thumbsUpTimer = 0f;
-    private bool isThumbsUpPlaying = false;
 
     public float countdownDuration = 4f;
     private float countdownTimer = 0f;
-
-    // Random utterance timer
-    public float normalUtteranceInterval = 15f;
-    private float normalUtteranceTimer = 0f;
 
     private void Start()
     {
@@ -52,19 +42,16 @@ public class CharacterManager : MonoBehaviour
         characterAnimator.SetFloat("handwave_1_timer", handwaveTimer);
         characterAnimator.SetFloat("thumbsup_1_timer", thumbsUpTimer);
 
-        bool isCounting = characterAnimator.GetBool("is_character_counting");
-
         if (!isGameStarted && !isGameEnded)
         {
             HandleIdleHandwave();
         }
-        else if (isGameStarted && !isGameEnded && !isCounting)
+        else if (isGameStarted && !isGameEnded)
         {
-            // Only handle thumbs up after countdown is complete
             HandleThumbsUp();
         }
 
-        if (isCounting)
+        if (characterAnimator.GetBool("is_character_counting"))
         {
             countdownTimer += Time.deltaTime;
             if (countdownTimer >= countdownDuration)
@@ -75,46 +62,7 @@ public class CharacterManager : MonoBehaviour
         }
 
         handwaveTimer += Time.deltaTime;
-        
-        // Only increment thumbsUpTimer when not counting
-        if (!isCounting)
-        {
-            thumbsUpTimer += Time.deltaTime;
-        }
-
-        // Handle random normal utterance
-        HandleNormalUtterance();
-    }
-
-    private void HandleNormalUtterance()
-    {
-        normalUtteranceTimer += Time.deltaTime;
-        
-        if (normalUtteranceTimer >= normalUtteranceInterval)
-        {
-            // Only play if no other utterance is currently playing
-            if (!IsAnyUtterancePlaying())
-            {
-                PlayNormalUtterance();
-                normalUtteranceTimer = 0f;
-            }
-        }
-    }
-
-    private bool IsAnyUtterancePlaying()
-    {
-        return (gameStartUtterance != null && gameStartUtterance.isPlaying) ||
-               (gameOverUtterance != null && gameOverUtterance.isPlaying) ||
-               (normalUtterance != null && normalUtterance.isPlaying);
-    }
-
-    private void PlayNormalUtterance()
-    {
-        if (normalUtterance != null && normalUtterance.clip != null)
-        {
-            normalUtterance.loop = false;
-            normalUtterance.Play();
-        }
+        thumbsUpTimer += Time.deltaTime;
     }
 
     private void OnGameStarted()
@@ -128,15 +76,7 @@ public class CharacterManager : MonoBehaviour
         StopHandwave();
         // Start countdown
         countdownTimer = 0f;
-        thumbsUpTimer = 0f; // Reset thumbs up timer
         characterAnimator.SetBool("is_character_counting", true);
-
-        // Play game start utterance
-        if (gameStartUtterance != null && gameStartUtterance.clip != null)
-        {
-            gameStartUtterance.loop = false;
-            gameStartUtterance.Play();
-        }
     }
 
     private void OnGameEnded()
@@ -146,13 +86,6 @@ public class CharacterManager : MonoBehaviour
         characterAnimator.SetBool("is_character_gameover", true);
 
         StopThumbsUp();
-
-        // Play game over utterance
-        if (gameOverUtterance != null && gameOverUtterance.clip != null)
-        {
-            gameOverUtterance.loop = false;
-            gameOverUtterance.Play();
-        }
     }
 
     private void OnGameReset()
@@ -166,8 +99,6 @@ public class CharacterManager : MonoBehaviour
         isGameEnded = false;
         handwaveTimer = 0f;
         thumbsUpTimer = 0f;
-        normalUtteranceTimer = 0f;
-        isThumbsUpPlaying = false;
 
         foreach (string param in new string[]
         {
@@ -213,7 +144,7 @@ public class CharacterManager : MonoBehaviour
 
     private void HandleThumbsUp()
     {
-        if (thumbsUpTimer >= thumbsUpCooldown && !isThumbsUpPlaying)
+        if (thumbsUpTimer >= thumbsUpCooldown)
         {
             PlayRandomThumbsUp();
             thumbsUpTimer = 0f;
@@ -222,8 +153,6 @@ public class CharacterManager : MonoBehaviour
 
     private void PlayRandomThumbsUp()
     {
-        isThumbsUpPlaying = true;
-        
         bool useThumbsUp1 = Random.value > 0.5f;
         characterAnimator.SetBool("is_character_thumbsup_1", useThumbsUp1);
         characterAnimator.SetBool("is_character_thumbsup_2", !useThumbsUp1);
@@ -236,6 +165,5 @@ public class CharacterManager : MonoBehaviour
     {
         characterAnimator.SetBool("is_character_thumbsup_1", false);
         characterAnimator.SetBool("is_character_thumbsup_2", false);
-        isThumbsUpPlaying = false;
     }
 }

@@ -4352,6 +4352,13 @@ MonoBehaviour:
   backgroundMusicAudioSource: {fileID: 354062038}
   whistleAudioSource: {fileID: 450712294}
   surprisedUtterance: {fileID: 1140994968}
+  screenshotFolderName: Drawings
+  useCustomPath: 1
+  customSavePath: /Users/andreas_garcia/Scrap
+  cropXPercent: 0.24
+  cropYPercent: 0.2
+  cropWidthPercent: 0.58
+  cropHeightPercent: 0.6
   totalTime: 30
   isTimerRunning: 0
 --- !u!222 &6642621724155528433

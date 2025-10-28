@@ -30,6 +30,7 @@ public class PaintSparkleManager : MonoBehaviour
     private ImuUdpLogger imu_receiver;
     private Color lastBrushColor;
     private UI_manager uiManager; 
+    private bool playerIDSet = false;
 
     void Start()
     {
@@ -37,10 +38,7 @@ public class PaintSparkleManager : MonoBehaviour
         lastSparkleTime = Time.time;
         lastCooldownTime = -sparkleCooldown;  // so first sparkle isn't blocked
 
-        // count how many objects with tag "Brush"
-        // playerID is equal to the quantity of those objects - 1
-        GameObject[] brushes = GameObject.FindGameObjectsWithTag("Brush");
-        playerID = brushes.Length - 1;
+        // playerID is assigned by IMUReceiver via SetPlayerID when the rig is spawned
 
         // Find camera tagged as "MainCamera" and get the component from there
         imu_receiver = Camera.main != null ? Camera.main.GetComponent<ImuUdpLogger>() : null;
@@ -55,6 +53,16 @@ public class PaintSparkleManager : MonoBehaviour
         if (uiManager == null)
         {
             Debug.LogWarning("UI_manager not found in scene! Sparkles will not check timer state.");
+        }
+
+        // Ensure we have a PaintSystem reference (prefab instances won't keep scene refs)
+        if (paintSystem == null)
+        {
+            paintSystem = FindObjectOfType<Paint.PaintSystem>();
+            if (paintSystem == null)
+            {
+                Debug.LogError("PaintSparkleManager: No PaintSystem found in scene.");
+            }
         }
 
         // Initialize last brush color
@@ -88,6 +96,12 @@ public class PaintSparkleManager : MonoBehaviour
 
     void Update()
     {
+        // Warn if playerID was never set (should be set by IMUReceiver)
+        if (!playerIDSet && Time.frameCount % 120 == 0)
+        {
+            Debug.LogWarning($"PaintSparkleManager on {gameObject.name} has no playerID set! Painting may not work correctly.");
+        }
+
         // Check for brush color change (always active, even when timer is stopped)
         if (imu_receiver != null && playerID < imu_receiver.brushes_colour.Length)
         {
@@ -213,9 +227,19 @@ public class PaintSparkleManager : MonoBehaviour
         lastPosition = transform.position;
     }
 
+    public void SetPlayerID(int id)
+    {
+        playerID = id;
+        playerIDSet = true;
+    }
+
     void FireProjectiles(int playerId, Vector3 origin, Vector3 direction, Color tipColor)
     {
-        if (paintSystem == null) return;
+        if (paintSystem == null)
+        {
+            Debug.LogWarning("PaintSparkleManager: paintSystem is null; skipping paint spawn.");
+            return;
+        }
 
         // Use the new multi-player RequestSpawn API
         paintSystem.RequestSpawn(

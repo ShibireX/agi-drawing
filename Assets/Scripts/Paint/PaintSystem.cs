@@ -39,7 +39,8 @@ namespace Paint
 
         [Header("Rendering")]
         public Mesh mesh;            // assign a low-poly sphere
-        public Material renderMat;   // material using Unlit/InstancedParticles
+        public Material renderMat;   // material using Unlit/InstancedParticles (template)
+        Material renderMatInstance;  // per-instance material to avoid shared buffer binding
         public Color baseColor = Color.white;
 
         [Header("Canvas Painting")]
@@ -149,8 +150,13 @@ namespace Paint
 
             if (renderMat != null)
             {
-                renderMat.enableInstancing = true;                    // double-ensure
-                particlesOwner.Bind(renderMat, "_Particles");         // sets buffer + _ActiveCount
+                if (renderMatInstance == null)
+                {
+                    renderMatInstance = new Material(renderMat);
+                    renderMatInstance.name = renderMat.name + " (Instance)";
+                }
+                renderMatInstance.enableInstancing = true;                    // double-ensure
+                particlesOwner.Bind(renderMatInstance, "_Particles");         // sets buffer + _ActiveCount
             }
 
             // Compute setup (only if assigned)
@@ -168,10 +174,10 @@ namespace Paint
                 argsBuffer = new ComputeBuffer(1, sizeof(uint) * 5, ComputeBufferType.IndirectArguments);
 
             // Bind render material if present
-            if (renderMat != null && particlesOwner.ParticleBuffer != null)
+            if (renderMatInstance != null && particlesOwner.ParticleBuffer != null)
             {
-                renderMat.SetBuffer("_Particles", particlesOwner.ParticleBuffer);
-                renderMat.SetColor("_BaseColor", baseColor);
+                renderMatInstance.SetBuffer("_Particles", particlesOwner.ParticleBuffer);
+                renderMatInstance.SetColor("_BaseColor", baseColor);
             }
 
             drawBounds = new Bounds(Vector3.zero, boundsExtents * 2f);
@@ -192,7 +198,8 @@ namespace Paint
 
             // Make sure the Particles buffer is bound to material & compute
             particlesOwner.Bind(simulationCS, kernelIntegrate, "_Particles");
-            particlesOwner.Bind(renderMat, "_Particles");
+            if (renderMatInstance != null)
+                particlesOwner.Bind(renderMatInstance, "_Particles");
 
             // Optional: we�ll let compute scan all slots
             particlesOwner.activeCount = particlesOwner.particleCount;
@@ -211,6 +218,11 @@ namespace Paint
 
         void OnDisable()
         {
+            if (renderMatInstance != null)
+            {
+                Destroy(renderMatInstance);
+                renderMatInstance = null;
+            }
             spawnCountBuffer?.Dispose();
             spawnCountBuffer = null;
 
@@ -228,6 +240,10 @@ namespace Paint
         {
             // Clear collision count at start of frame
             uint[] zeroCollisions = { 0u };
+            if (collisionCountBuffer == null)
+            {
+                collisionCountBuffer = new ComputeBuffer(1, sizeof(uint), ComputeBufferType.Structured);
+            }
             collisionCountBuffer.SetData(zeroCollisions);
 
             // Set static uniforms
@@ -258,9 +274,22 @@ namespace Paint
             }
             simulationCS.SetVector("_CanvasCenter", canvasCenter);
 
-            // Ensure bindings
+            // Ensure bindings (rebinding every frame avoids cross-instance contention on shared ComputeShader)
             particlesOwner.Bind(simulationCS, kernelIntegrate, "_Particles");
-            particlesOwner.Bind(renderMat, "_Particles");
+            if (renderMatInstance != null)
+                particlesOwner.Bind(renderMatInstance, "_Particles");
+            if (spawnCountBuffer == null)
+            {
+                spawnCountBuffer = new ComputeBuffer(1, sizeof(uint), ComputeBufferType.Structured);
+            }
+            if (collisionBuffer == null)
+            {
+                collisionBuffer = new ComputeBuffer(maxCollisionsPerFrame, sizeof(float) * 6, ComputeBufferType.Structured);
+            }
+            // Rebind compute buffers every frame (because ComputeShader is a shared asset in Unity)
+            simulationCS.SetBuffer(kernelIntegrate, "_SpawnedCount", spawnCountBuffer);
+            simulationCS.SetBuffer(kernelIntegrate, "_Collisions", collisionBuffer);
+            simulationCS.SetBuffer(kernelIntegrate, "_CollisionCount", collisionCountBuffer);
 
             // Legacy single-player support (for backward compatibility)
             if (emit)
@@ -317,7 +346,7 @@ namespace Paint
                     simulationCS.SetInt("_SpawnBudget", budget);
                     simulationCS.SetInt("_EmitEnabled", 1);
 
-                    // Reset GPU counter
+                    // Ensure per-dispatch counter buffer is bound and reset
                     uint[] zero = { 0u };
                     spawnCountBuffer.SetData(zero);
 
@@ -373,7 +402,7 @@ namespace Paint
 
             // Draw all instances; dead ones have radius=0 so they vanish
             UpdateArgsBuffer();
-            Graphics.DrawMeshInstancedIndirect(mesh, 0, renderMat, drawBounds, argsBuffer);
+            Graphics.DrawMeshInstancedIndirect(mesh, 0, renderMatInstance != null ? renderMatInstance : renderMat, drawBounds, argsBuffer);
         }
 
         void UpdateArgsBuffer()

@@ -480,6 +480,15 @@ public class ImuUdpLogger : MonoBehaviour
             {
                 rig.brushWiggle.fireAccelThreshold = fireAccelThreshold;
             }
+
+            // Assign player ID to PaintSparkleManager based on stable spawn slot
+            var sparkle = rig.root.GetComponentInChildren<PaintSparkleManager>();
+            if (sparkle != null)
+            {
+                int slot = spawnOrder.IndexOf(deviceId);
+                if (slot < 0) slot = 0;
+                sparkle.SetPlayerID(slot);
+            }
         }
 
         UnityEngine.Debug.Log($"[ImuUdpLogger] Spawned rig for device {deviceId}.");

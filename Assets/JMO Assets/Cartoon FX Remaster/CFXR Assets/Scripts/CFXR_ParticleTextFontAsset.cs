@@ -52,11 +52,6 @@ namespace CartoonFX
 		{
 			bool valid = !string.IsNullOrEmpty(CharSequence) && CharSprites != null && CharSprites.Length == CharSequence.Length && CharKerningOffsets != null && CharKerningOffsets.Length == CharSprites.Length;
 
-			if (!valid)
-			{
-				Debug.LogError(string.Format("Invalid ParticleTextFontAsset: '{0}'\n", this.name), this);
-			}
-
 			return valid;
 		}
 

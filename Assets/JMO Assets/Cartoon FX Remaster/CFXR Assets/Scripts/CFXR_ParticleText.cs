@@ -238,7 +238,6 @@ namespace CartoonFX
                     if (overflow > 1000)
                     {
                         // just in case...
-                        Debug.LogError("Overflow!");
                         break;
                     }
                 }

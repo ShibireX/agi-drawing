@@ -43,26 +43,13 @@ public class PaintSparkleManager : MonoBehaviour
         // Find camera tagged as "MainCamera" and get the component from there
         imu_receiver = Camera.main != null ? Camera.main.GetComponent<ImuUdpLogger>() : null;
 
-        if (imu_receiver == null)
-        {
-            Debug.LogWarning("IMUReceiver not found on MainCamera! Please add the IMUReceiver script to your MainCamera.");
-        }
-
         // Find the UI_manager in the scene
         uiManager = FindObjectOfType<UI_manager>();
-        if (uiManager == null)
-        {
-            Debug.LogWarning("UI_manager not found in scene! Sparkles will not check timer state.");
-        }
 
         // Ensure we have a PaintSystem reference (prefab instances won't keep scene refs)
         if (paintSystem == null)
         {
             paintSystem = FindObjectOfType<Paint.PaintSystem>();
-            if (paintSystem == null)
-            {
-                Debug.LogError("PaintSparkleManager: No PaintSystem found in scene.");
-            }
         }
 
         // Initialize last brush color
@@ -96,12 +83,6 @@ public class PaintSparkleManager : MonoBehaviour
 
     void Update()
     {
-        // Warn if playerID was never set (should be set by IMUReceiver)
-        if (!playerIDSet && Time.frameCount % 120 == 0)
-        {
-            Debug.LogWarning($"PaintSparkleManager on {gameObject.name} has no playerID set! Painting may not work correctly.");
-        }
-
         // Check for brush color change (always active, even when timer is stopped)
         if (imu_receiver != null && playerID < imu_receiver.brushes_colour.Length)
         {
@@ -110,7 +91,6 @@ public class PaintSparkleManager : MonoBehaviour
             // If color changed, play BasicHit effect once (index 1, after Stars at index 0)
             if (currentBrushColor != lastBrushColor)
             {
-                Debug.Log($"Brush color changed from {lastBrushColor} to {currentBrushColor}");
                 lastBrushColor = currentBrushColor;
                 
                 // Play color change sound
@@ -127,7 +107,6 @@ public class PaintSparkleManager : MonoBehaviour
                     {
                         ApplyColorToParticleSystem(ps, currentBrushColor, true);
                         ps.Play();
-                        Debug.Log($"Playing {ps.name} effect for color change");
                     }
                 }
             }
@@ -177,10 +156,6 @@ public class PaintSparkleManager : MonoBehaviour
                         Color brushColor = imu_receiver.brushes_colour[playerID];
                         ApplyColorToParticleSystem(ps, brushColor, true);
                     }
-                    else
-                    {
-                        Debug.LogWarning($"Cannot apply color - imu_receiver: {imu_receiver != null}, playerID: {playerID}");
-                    }
                     
                     // Play appropriate sound based on effect name
                     string effectName = ps.name.ToLower();
@@ -214,8 +189,6 @@ public class PaintSparkleManager : MonoBehaviour
         {
             // SPAWN PAINT PARTICLES ------------------------------------------------------------------
 
-            Debug.Log(playerID);
-            Debug.Log(imu_receiver.brushes_colour[playerID]);
             FireProjectiles(
                 playerId: playerID, // managed locally in Unity
                 origin: new Vector3(brushTip.position.x, brushTip.position.y, brushTip.position.z),   
@@ -237,7 +210,6 @@ public class PaintSparkleManager : MonoBehaviour
     {
         if (paintSystem == null)
         {
-            Debug.LogWarning("PaintSparkleManager: paintSystem is null; skipping paint spawn.");
             return;
         }
 

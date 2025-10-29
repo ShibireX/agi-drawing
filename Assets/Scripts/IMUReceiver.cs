@@ -128,9 +128,6 @@ public class ImuUdpLogger : MonoBehaviour
 
     void Start()
     {
-                    
-        UnityEngine.Debug.Log("script start");
-
         brushes_colour = new Color[maxPlayers];
 
         try
@@ -214,7 +211,7 @@ public class ImuUdpLogger : MonoBehaviour
                 }
             }
             catch (SocketException) { if (!running) break; }
-            catch (Exception e) { UnityEngine.Debug.Log($"[ImuUdpLogger] Worker exception: {e.Message}"); }
+            catch (Exception) { }
         }
     }
 
@@ -288,10 +285,6 @@ public class ImuUdpLogger : MonoBehaviour
                     st.hzSmoothed = (st.hzSmoothed <= 0f) ? hz : Mathf.Lerp(st.hzSmoothed, hz, 0.4f);
                     st.lastLogTime = now;
                     st.packetsSinceLastLog = 0;
-
-                    /*UnityEngine.Debug.Log(
-                        $"[IMU d{st.deviceId}] seq={st.lastSeq} rate={st.hzSmoothed:F1} Hz " +
-                        $"q=({st.q.x:F2},{st.q.y:F2},{st.q.z:F2},{st.q.w:F2})");*/
                 }
 
                 // Update rig transform + fire logic
@@ -393,7 +386,6 @@ public class ImuUdpLogger : MonoBehaviour
                 }
                 lock (_lock) { devices.Remove(id); }
                 if (spawnOrder.Remove(id)) layoutChanged = true;
-                UnityEngine.Debug.Log($"[ImuUdpLogger] Despawned rig for device {id} (timeout).");
             }
             if (layoutChanged) RelayoutAll();
         }
@@ -446,7 +438,6 @@ public class ImuUdpLogger : MonoBehaviour
         }
         else
         {
-            UnityEngine.Debug.Log("Cube spawned");
             // Minimal default: cube as reference + small sphere tip in front
             var root = GameObject.CreatePrimitive(PrimitiveType.Cube);
             root.name = $"PlayerRig_{deviceId}";
@@ -491,7 +482,6 @@ public class ImuUdpLogger : MonoBehaviour
             }
         }
 
-        UnityEngine.Debug.Log($"[ImuUdpLogger] Spawned rig for device {deviceId}.");
         return rig;
     }
     

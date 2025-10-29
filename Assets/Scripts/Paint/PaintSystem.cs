@@ -116,10 +116,6 @@ namespace Paint
                     prevDirection = playerPrevDirections[playerId]
                 });
 
-                if (debugMovement)
-                {
-                    Debug.Log($"Player {playerId} - Speed: {currentMovementSpeed:F2} u/s | Threshold: {movementThreshold:F2} | Spawning: true");
-                }
             }
 
             // Update tracking
@@ -129,14 +125,10 @@ namespace Paint
 
         void OnEnable()
         {
-            // Check that we support everything
-            Debug.Log($"Compute:{SystemInfo.supportsComputeShaders}, Instancing:{SystemInfo.supportsInstancing}, API:{SystemInfo.graphicsDeviceType}");
-
             // Grab the Particles component
             particlesOwner = GetComponent<Particles>();
             if (particlesOwner == null)
             {
-                Debug.LogError("PaintSystem needs a Particles component on the same GameObject.");
                 enabled = false;
                 return;
             }
@@ -145,7 +137,6 @@ namespace Paint
             if (mesh == null)
             {
                 // Safer: assign in Inspector. Built-in sphere resource is not guaranteed across pipelines.
-                Debug.LogWarning("Mesh is null. Assign a sphere mesh in the inspector.");
             }
 
             if (renderMat != null)
@@ -209,10 +200,6 @@ namespace Paint
             if (canvasPainter == null)
             {
                 canvasPainter = FindObjectOfType<CanvasPainter>();
-                if (canvasPainter != null)
-                {
-                    Debug.Log("[PaintSystem] CanvasPainter found automatically.");
-                }
             }
         }
 
@@ -266,11 +253,6 @@ namespace Paint
             if (canvasPainter != null && canvasPainter.canvasObject != null)
             {
                 canvasCenter = canvasPainter.canvasObject.transform.position;
-                // Log canvas position periodically
-                if (Time.frameCount % 60 == 0)
-                {
-                    Debug.Log($"[PaintSystem] Canvas position: {canvasCenter}, rotation: {canvasPainter.canvasObject.transform.rotation.eulerAngles}");
-                }
             }
             simulationCS.SetVector("_CanvasCenter", canvasCenter);
 
@@ -311,15 +293,10 @@ namespace Paint
                         position = spawnPosition,
                         direction = spawnDirection,
                         color = spawnColor,
-                        prevPosition = prevSpawnPosition,
-                        prevDirection = prevSpawnDirection
-                    });
-
-                    if (debugMovement)
-                    {
-                        Debug.Log($"Legacy - Speed: {movementSpeed:F2} u/s | Threshold: {movementThreshold:F2} | Spawning: true");
-                    }
-                }
+                    prevPosition = prevSpawnPosition,
+                    prevDirection = prevSpawnDirection
+                });
+            }
 
                 prevSpawnPosition = spawnPosition;
                 prevSpawnDirection = spawnDirection;
@@ -389,15 +366,9 @@ namespace Paint
                     CanvasPainter.CollisionData[] collisions = new CanvasPainter.CollisionData[Mathf.Min(numCollisions, maxCollisionsPerFrame)];
                     collisionBuffer.GetData(collisions, 0, 0, collisions.Length);
 
-                    Debug.Log($"[PaintSystem] {numCollisions} collisions detected this frame, processing {collisions.Length}");
-
                     // Process collisions with CanvasPainter
                     canvasPainter.ProcessCollisions(collisions, collisions.Length);
                 }
-            }
-            else if (Time.frameCount % 60 == 0) // Log every 60 frames if painter is missing
-            {
-                Debug.LogWarning("[PaintSystem] CanvasPainter is null! Canvas painting disabled.");
             }
 
             // Draw all instances; dead ones have radius=0 so they vanish
@@ -419,9 +390,6 @@ namespace Paint
 
             uint[] args = { indexCount, instanceCnt, indexStart, baseVertex, 0u };
 
-            if (args[1] == 0) Debug.LogWarning("Draw args instance count is 0 � nothing will render.");
-
-            //Debug.Log("Number of instances: " + args[1]);
             argsBuffer.SetData(args);
         }
 

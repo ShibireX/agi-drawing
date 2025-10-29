@@ -226,7 +226,6 @@ public class UI_manager : MonoBehaviour
         float scaleDown = 0.5f;
 
         Vector3 originalScale = text_321.transform.localScale;
-        Debug.Log(originalScale);
         Vector3 startScale = originalScale * scaleUp;
         Vector3 endScale = originalScale * scaleDown;
 
@@ -275,7 +274,6 @@ public class UI_manager : MonoBehaviour
         if (!Directory.Exists(savePath))
         {
             Directory.CreateDirectory(savePath);
-            Debug.Log($"Created screenshot directory at: {savePath}");
         }
     }
     
@@ -376,8 +374,6 @@ public class UI_manager : MonoBehaviour
         
         // Save to disk
         File.WriteAllBytes(fullPath, bytes);
-        
-        Debug.Log($"Screenshot saved to: {fullPath}");
     }
 
     /// <summary>

@@ -207,17 +207,6 @@ namespace CartoonFX
                     shaderErrors = Array.ConvertAll(errors, err => $"{err.message} (line {err.line})");
                     foreach (ShaderMessage error in errors)
                     {
-                        string message = error.line <= 0 ?
-                            string.Format("Shader Error in '{0}' (in file '{2}')\nError: {1}\n", shaderName, error.message, error.file) :
-                            string.Format("Shader Error in '{0}' (line {2} in file '{3}')\nError: {1}\nLine: {4}\n", shaderName, error.message, error.line, error.file, shaderSourceLines[error.line-1]);
-                        if (error.severity == ShaderCompilerMessageSeverity.Warning)
-                        {
-                            Debug.LogWarning(message);
-                        }
-                        else
-                        {
-                            Debug.LogError(message);
-                        }
                     }
                 }
                 else

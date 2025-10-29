@@ -149,14 +149,12 @@ namespace CartoonFX
                 case ParticleSystemShapeType.SkinnedMeshRenderer:
                 case ParticleSystemShapeType.MeshRenderer:
                 {
-                    Debug.LogWarning( string.Format("[{0}] Calculating volume for a mesh is unsupported.", nameof(CFXR_EmissionBySurface)));
                     this.active = false;
                     return 0;
                 }
                 case ParticleSystemShapeType.Sprite:
                 case ParticleSystemShapeType.SpriteRenderer:
                 {
-                    Debug.LogWarning( string.Format("[{0}] Calculating volume for a sprite is unsupported.", nameof(CFXR_EmissionBySurface)));
                     this.active = false;
                     return 0;
                 }

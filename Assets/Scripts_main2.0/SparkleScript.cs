@@ -30,11 +30,6 @@ public class SparkleScript : MonoBehaviour
         
         // Find camera tagged as "MainCamera" and get the component from there
         imu_receiver = Camera.main != null ? Camera.main.GetComponent<ImuUdpLogger>() : null;
-        
-        if (imu_receiver == null)
-        {
-            Debug.LogWarning("SparkleScript: IMUReceiver not found on MainCamera!");
-        }
     }
 
     void Update()
@@ -65,7 +60,6 @@ public class SparkleScript : MonoBehaviour
             }
 
             // Play particle system at child index = currentSparkle
-            Debug.Log("current sparkle: " + currentSparkle);
             if (transform.childCount > currentSparkle)
             {
                 ParticleSystem ps = transform.GetChild(currentSparkle).GetComponent<ParticleSystem>();
@@ -93,8 +87,6 @@ public class SparkleScript : MonoBehaviour
     void ApplyColorToParticleSystem(ParticleSystem ps, Color brushColor, bool includeChildren = true)
     {
         if (ps == null) return;
-
-        Debug.Log($"SparkleScript: Applying color {brushColor} to {ps.name}");
         
         // Stop and clear any existing particles
         ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
@@ -123,7 +115,6 @@ public class SparkleScript : MonoBehaviour
                 
                 newGradient.SetKeys(colorKeys, oldGradient.alphaKeys);
                 colorOverLifetime.color = new ParticleSystem.MinMaxGradient(newGradient);
-                Debug.Log($"  └─ Updated Color over Lifetime gradient");
             }
             else
             {
@@ -140,12 +131,10 @@ public class SparkleScript : MonoBehaviour
             if (mat.HasProperty("_TintColor"))
             {
                 mat.SetColor("_TintColor", brushColor);
-                Debug.Log($"  └─ Set _TintColor");
             }
             if (mat.HasProperty("_Color"))
             {
                 mat.SetColor("_Color", brushColor);
-                Debug.Log($"  └─ Set _Color");
             }
         }
 
@@ -157,7 +146,6 @@ public class SparkleScript : MonoBehaviour
             {
                 if (childPs != ps) // Don't re-apply to self
                 {
-                    Debug.Log($"  └─ Also applying to child: {childPs.name}");
                     ApplyColorToParticleSystem(childPs, brushColor, false); // Don't recurse infinitely
                 }
             }

@@ -531,7 +531,6 @@ namespace CartoonFX
 					var end = reader.ReadToEnd();
 					if(!float.TryParse(end, out value))
 					{
-						Debug.LogError("Couldn't parse float from property expression:\n" + end);
 						return false;
 					}
 
@@ -544,7 +543,6 @@ namespace CartoonFX
 				overflow++;
 				if(overflow >= 9999)
 				{
-					Debug.LogError("Expression parsing overflow!\n");
 					return false;
 				}
 			}
@@ -564,7 +562,7 @@ namespace CartoonFX
 						case "y": propValue = m.GetVector(split[0]).y; break;
 						case "z": propValue = m.GetVector(split[0]).z; break;
 						case "w": propValue = m.GetVector(split[0]).w; break;
-						default: Debug.LogError("Invalid component for vector property: '" + property + "'"); break;
+						default: break;
 					}
 				}
 				else
@@ -579,7 +577,6 @@ namespace CartoonFX
 					case "<>": conditionMet = propValue != value; break;	//not equal, "!=" is replaced by "<>" to prevent bug with leading ! ("not" operator)
 					case "==": conditionMet = propValue == value; break;
 					default:
-						Debug.LogError("Invalid property expression:\n" + expr);
 						break;
 				}
 				if(conditionMet)

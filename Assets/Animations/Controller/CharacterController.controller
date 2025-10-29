@@ -511,7 +511,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Character_Character_countdown
-  m_Speed: 3
+  m_Speed: 2.75
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: -7536524942511126469}

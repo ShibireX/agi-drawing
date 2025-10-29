@@ -1,8 +1,10 @@
 Shader "Unlit/InstancedParticlesUnlit-BIRP"
 {
+    //Added particle color which acts as a "grayness" multiplier for the base color
     Properties
     {
         _BaseColor("Base Color (multiplier)", Color) = (1,1,1,1)
+        _Grayness("_Grayness amount", Range(0.05,1))  = 0.7
     }
 
     SubShader
@@ -30,7 +32,7 @@ Shader "Unlit/InstancedParticlesUnlit-BIRP"
 
             StructuredBuffer<Particle> _Particles;
             float4 _BaseColor;
-
+            float _Grayness;
             struct appdata {
                 float3 vertex    : POSITION;
                 float2 uv        : TEXCOORD0;
@@ -75,8 +77,8 @@ Shader "Unlit/InstancedParticlesUnlit-BIRP"
                 float alphaMask = saturate(1.0 - dist);
 
                 clip(alphaMask - 0.01);
-
-                float4 rawColor = i.col;
+                // Added *0.7 to match the particles color and the canvas 
+                float4 rawColor = i.col*_Grayness;
                 float4 blendColor = float4(0.85, 0.85, 0.85, 1.0);
                 float mixFactor = 0.3;
                 float4 baseCol = rawColor * (1.0f - mixFactor) + blendColor * mixFactor;

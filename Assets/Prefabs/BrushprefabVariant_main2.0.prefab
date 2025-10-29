@@ -30045,8 +30045,8 @@ MonoBehaviour:
   - {fileID: 3779122898280317474}
   - {fileID: 7861923825525250236}
   brushroot: {fileID: 5743927751537540100}
-  wiggleSpeed: 20
-  MaxAngle: 10
+  wiggleSpeed: 11.18
+  MaxAngle: 15
   AngleReduction: 2
 --- !u!4 &5743927751537540100 stripped
 Transform:

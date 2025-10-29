@@ -4285,7 +4285,7 @@ MonoBehaviour:
   surprisedUtterance: {fileID: 1140994968}
   screenshotFolderName: Drawings
   useCustomPath: 1
-  customSavePath: /Users/andreas_garcia/Scrap
+  customSavePath: C:\Users\Kazak\Desktop\Project_bilder
   cropXPercent: 0.24
   cropYPercent: 0.2
   cropWidthPercent: 0.58

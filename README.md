@@ -52,5 +52,6 @@ Phone acts as the controller for each of the 4 players. 1 to 4 players are suppo
 
 * **Check WIFI/ip configs** Check that both the phone and the computer is connected to the same wifi and has the same IP configs. 
 * * **Calibrate phone** Phones might have different orientations, this can be changed in the phone UI bu flipping each of the axises. IF the phone desynces with the virtual brush then point the phone towards the screen and press calibrate. 
-* **If no paint is shown** Check connection issues or accelration threshold inside the unity project.  
+* **If no paint is shown** Check connection issues or accelration threshold inside the unity project.
+* **UDP receiver** UDP receiver is attached to the main camera inside the unity application as a Imu udp logger component. 
 

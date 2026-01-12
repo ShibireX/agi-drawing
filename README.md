@@ -38,19 +38,19 @@ Before opening the project, ensure you have the following installed and configur
 
 1.  **Setup the Webcleint** Setup the Weblcient according to its readme. 
 2.  **Start the unity application in the editor** Start the project, project has not been tested as a build. Run it in the editor. 
-3.  **Connect the phone** On the phone, press connect and the calibrate button to join
-4.   
+3.  **Connect the phone** On the phone, press connect and the calibrate button to join 
+4.  **play** if the connection is working, then values should be seen in the console in the webclient and paint should be splashed in the unity application. 
 
 ---
 
 ## 🎮 Controls
 
-Phone acts as the controller for each of the 4 players. 1 to 4 players are supported
+Phone acts as the controller for each of the 4 players. 1 to 4 players are supported. 
 ---
 
 ## ⚠️ Important Notes
 
-* **Project not buildable** The project cannot be built on the headset due to the project making use of [LASP](https://github.com/keijiro/Lasp). Therefore you must run the project via meta quest LINK and stream the project, I.e PCVR.
-* **Controllers Not tested/implemented:** Project makes of hand tracking only. To calibrate the trombones position the "C" key is used while Spacebar is used to start the game. When the game ends, you simply exit the game and rerun it in the editor. The use of controllers is not supported. 
-* **Basic scene** The game exists inside the "BasicScene" scene with the remaining scenes being for testing or outdated. 
+* **Check WIFI/ip configs** Check that both the phone and the computer is connected to the same wifi and has the same IP configs. 
+* * **Calibrate phone** Phones might have different orientations, this can be changed in the phone UI bu flipping each of the axises. IF the phone desynces with the virtual brush then point the phone towards the screen and press calibrate. 
+* **If no paint is shown** Check connection issues or accelration threshold inside the unity project.  
 
